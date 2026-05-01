@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no"/>
+<title>PlaceAR · WebXR</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --primary:#F59064;
+  --secondary:#284F75;
+  --lg:#F0F0F0;
+  --lg2:#F7F7F7;
+  --dg:#6E6E6E;
+  --hint:#474747;
+  --grey:#AAAAAA;
+  --green:#52B46B;
+  --red:#DD5050;
+  --white:#ffffff;
+  --font:'Montserrat',sans-serif;
+  --r-sm:8px;--r-md:14px;--r-lg:22px;--r-xl:32px;
+  --shadow:0 8px 40px rgba(40,79,117,0.18);
+}
+html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:var(--font)}
+
+/* ── THREE CANVAS (WebXR renders into this) ── */
+#threeCanvas{position:fixed;inset:0;width:100%;height:100%;z-index:0}
+
+/* ── RETICLE ── */
+#reticle{position:fixed;z-index:3;pointer-events:none;transform:translate(-50%,-50%);opacity:0;transition:opacity .3s;top:50%;left:50%}
+#reticle.visible{opacity:1}
+
+/* ── TOP BAR ── */
+#topBar{position:fixed;top:0;left:0;right:0;z-index:20;display:flex;align-items:center;justify-content:space-between;padding:14px 18px 10px;background:linear-gradient(to bottom,rgba(0,0,0,.65) 0%,transparent 100%);pointer-events:none}
+#topBar>*{pointer-events:auto}
+#appLogoText{font-size:16px;font-weight:700;color:#fff;letter-spacing:-.3px}
+#topRight{display:flex;align-items:center;gap:8px}
+.topPill{display:flex;align-items:center;gap:5px;padding:5px 12px;border-radius:var(--r-xl);font-size:10px;font-weight:600;backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.15);color:#fff;background:rgba(17,17,17,.5);cursor:pointer}
+.topPill-dot{width:5px;height:5px;border-radius:50%;background:var(--green);animation:pulse .9s infinite}
+#placedBadge{display:none;align-items:center;gap:5px;padding:4px 11px;border-radius:20px;background:rgba(245,144,100,.18);border:1px solid rgba(245,144,100,.4);font-size:10px;font-weight:700;color:var(--primary)}
+#placedBadge.visible{display:flex}
+
+/* ── STATUS TOAST ── */
+#statusToast{position:fixed;top:68px;left:50%;transform:translateX(-50%);z-index:19;display:flex;align-items:center;gap:7px;padding:7px 16px;border-radius:var(--r-xl);font-size:11px;font-weight:500;color:rgba(255,255,255,.9);background:rgba(17,17,17,.78);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.1);white-space:nowrap;pointer-events:none;max-width:90vw}
+#statusDot{width:6px;height:6px;border-radius:50%;background:var(--grey);flex-shrink:0;transition:background .3s}
+#statusToast.ok #statusDot{background:var(--green)}
+#statusToast.scanning #statusDot{background:var(--primary);animation:pulse .8s infinite}
+#statusToast.error #statusDot{background:var(--red)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeInDown{from{opacity:0;transform:translateX(-50%) translateY(-10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+#statusToast{animation:fadeInDown .3s ease}
+
+/* ── GLB LOADER ── */
+#glbLoader{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;flex-direction:column;gap:14px}
+#glbLoader.visible{display:flex}
+.spin{width:34px;height:34px;border:3px solid rgba(245,144,100,.25);border-top-color:var(--primary);border-radius:50%;animation:spin .7s linear infinite}
+#glbLoader p{color:rgba(255,255,255,.8);font-size:12px;font-weight:500}
+
+/* ── ACTION BAR (selected object) ── */
+#actionBar{position:fixed;bottom:0;left:0;right:0;z-index:25;transform:translateY(100%);transition:transform .3s cubic-bezier(.32,.72,0,1)}
+#actionBar.visible{transform:translateY(0)}
+#actionBarInner{margin:0 12px 12px;background:var(--white);border-radius:var(--r-lg);padding:12px 14px;display:flex;align-items:center;gap:8px;box-shadow:var(--shadow);flex-wrap:wrap}
+.aBtn{flex:1;min-width:42px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 5px;border-radius:var(--r-md);border:none;cursor:pointer;font-family:var(--font);font-size:8px;font-weight:600;letter-spacing:.3px;color:var(--hint);background:var(--lg2);transition:all .2s;text-transform:uppercase}
+.aBtn:active{transform:scale(.93)}
+.aBtn svg{width:17px;height:17px;stroke:var(--dg);fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.aBtn.delete{color:var(--red)}.aBtn.delete svg{stroke:var(--red)}
+.aBtn.confirm{background:var(--secondary);color:#fff}.aBtn.confirm svg{stroke:#fff}
+#selectedProductName{font-size:11px;font-weight:700;color:var(--secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:80px;flex-shrink:0}
+
+/* ── BOTTOM SHEET ── */
+#sheet{position:fixed;bottom:0;left:0;right:0;z-index:30;background:var(--white);border-radius:var(--r-lg) var(--r-lg) 0 0;box-shadow:var(--shadow);display:flex;flex-direction:column;transition:height .35s cubic-bezier(.32,.72,0,1)}
+#sheetHandle{width:100%;padding:12px 0 6px;cursor:grab;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+#handleBar{width:38px;height:4px;border-radius:3px;background:var(--lg)}
+
+/* ── QUICK ROW ── */
+#quickRow{display:flex;align-items:center;gap:6px;padding:0 12px 10px;flex-shrink:0}
+.qBtn{flex:1;display:flex;align-items:center;justify-content:center;gap:4px;padding:10px 6px;border-radius:var(--r-md);border:none;cursor:pointer;font-family:var(--font);font-size:10px;font-weight:600;transition:all .18s;white-space:nowrap;min-width:0}
+.qBtn:active{transform:scale(.96)}
+.qBtn-primary{background:var(--secondary);color:#fff}
+.qBtn-ghost{background:var(--lg2);color:var(--hint)}
+.qBtn-danger{background:rgba(221,80,80,.12);color:var(--red)}
+
+/* ── SHEET CONTENT ── */
+#sheetContent{flex:1;overflow-y:auto;padding:0 14px 28px;-webkit-overflow-scrolling:touch;scrollbar-width:none;min-height:0}
+#sheetContent::-webkit-scrollbar{display:none}
+#sheet.collapsed #sheetContent{overflow:hidden;opacity:0;pointer-events:none}
+
+.secLabel{font-size:9px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--grey);margin:12px 0 8px;display:flex;align-items:center;gap:7px}
+.secLabel::after{content:'';flex:1;height:1px;background:var(--lg)}
+
+/* ── CATEGORY TABS ── */
+#catTabs{display:flex;gap:6px;overflow-x:auto;padding:4px 0 10px;scrollbar-width:none}
+#catTabs::-webkit-scrollbar{display:none}
+.catTab{flex-shrink:0;padding:7px 14px;border-radius:var(--r-xl);font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;border:1.5px solid var(--lg);background:var(--lg2);color:var(--grey);cursor:pointer;transition:all .2s}
+.catTab.active{background:var(--secondary);color:#fff;border-color:var(--secondary)}
+
+/* ── PRODUCT SCROLL ── */
+#productScroll{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+#productScroll::-webkit-scrollbar{display:none}
+.prodCard{flex-shrink:0;width:120px;border-radius:var(--r-md);border:1.5px solid var(--lg);background:var(--lg2);cursor:pointer;overflow:hidden;transition:all .2s;position:relative}
+.prodCard:active{transform:scale(.95)}
+.prodCard.active{border-color:var(--primary);box-shadow:0 0 0 3px rgba(245,144,100,.15)}
+.prodCard-img{width:100%;height:68px;object-fit:cover;display:block;background:#dde3ec}
+.prodCard-body{padding:6px 8px 8px}
+.prodCard-name{font-size:9px;font-weight:700;color:var(--hint);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.prodCard-sub{font-size:8px;color:var(--grey);margin-top:1px}
+.prodCard-badge{position:absolute;top:5px;right:5px;background:rgba(40,79,117,.88);color:#fff;font-size:7px;font-weight:700;padding:2px 6px;border-radius:10px}
+
+/* ── SLIDERS ── */
+input[type=range]{-webkit-appearance:none;width:100%;height:4px;background:var(--lg);border-radius:3px;outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--secondary);cursor:pointer;border:2px solid #fff}
+.sliderHead{display:flex;justify-content:space-between;align-items:center;font-size:10px;font-weight:600;color:var(--dg);margin-bottom:4px}
+.sliderHead .val{background:var(--lg2);border-radius:var(--r-sm);padding:2px 7px;font-size:10px;font-weight:700;color:var(--secondary)}
+#controlsGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:4px}
+
+/* ── START SCREEN (before WebXR session) ── */
+#startScreen{position:fixed;inset:0;z-index:100;background:linear-gradient(135deg,#0a0f1a 0%,#1a2a3a 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px}
+#startScreen.hidden{display:none}
+.startIcon{width:80px;height:80px;border-radius:28px;background:rgba(245,144,100,.15);border:1px solid rgba(245,144,100,.3);display:flex;align-items:center;justify-content:center;margin-bottom:24px}
+.startTitle{font-size:32px;font-weight:700;color:#fff;letter-spacing:-1px;margin-bottom:10px;text-align:center}
+.startSub{font-size:13px;color:rgba(255,255,255,.6);line-height:1.7;text-align:center;max-width:280px;margin-bottom:12px}
+.startFeatures{display:flex;flex-direction:column;gap:8px;margin-bottom:32px;width:100%;max-width:280px}
+.startFeature{display:flex;align-items:center;gap:10px;font-size:12px;color:rgba(255,255,255,.7)}
+.startFeature-dot{width:6px;height:6px;border-radius:50%;background:var(--primary);flex-shrink:0}
+#startArBtn{padding:16px 40px;background:var(--primary);color:#fff;border:none;border-radius:var(--r-xl);font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 6px 24px rgba(245,144,100,.4);width:100%;max-width:280px}
+#startArBtn:disabled{opacity:.5;cursor:not-allowed}
+#noXrMsg{color:rgba(255,100,100,.8);font-size:12px;margin-top:12px;text-align:center;display:none}
+
+/* ── FALLBACK (camera-based if no WebXR) ── */
+#videoEl{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;display:none}
+
+/* ── SAVE TOAST ── */
+#saveToast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:200;display:flex;flex-direction:column;align-items:center;gap:10px;padding:24px 32px;background:rgba(20,30,40,.92);backdrop-filter:blur(20px);border-radius:var(--r-lg);border:1px solid rgba(255,255,255,.15);color:#fff;font-size:13px;font-weight:600;pointer-events:none;opacity:0;transition:opacity .3s;text-align:center}
+#saveToast.show{opacity:1}
+
+/* ── XR HIT TEST indicator (center of screen) ── */
+#xrReticle{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:5;pointer-events:none;opacity:0;transition:opacity .4s}
+#xrReticle.visible{opacity:1}
+
+/* ── SCALE HINT ── */
+#scaleHint{position:fixed;bottom:160px;left:50%;transform:translateX(-50%);z-index:19;padding:6px 14px;border-radius:20px;background:rgba(0,0,0,.6);color:rgba(255,255,255,.8);font-size:10px;font-weight:500;pointer-events:none;opacity:0;transition:opacity .3s}
+#scaleHint.visible{opacity:1}
+</style>
+</head>
+<body>
+
+<!-- FALLBACK VIDEO (non-WebXR) -->
+<video id="videoEl" autoplay playsinline muted></video>
+
+<!-- THREE.JS CANVAS -->
+<canvas id="threeCanvas"></canvas>
+
+<!-- XR RETICLE overlay (2D indicator) -->
+<div id="xrReticle">
+  <svg width="70" height="70" viewBox="0 0 70 70" fill="none">
+    <ellipse cx="35" cy="35" rx="30" ry="11" stroke="rgba(245,144,100,.85)" stroke-width="1.5" stroke-dasharray="6 4"/>
+    <circle cx="35" cy="35" r="3" fill="#F59064"/>
+    <line x1="35" y1="20" x2="35" y2="28" stroke="rgba(245,144,100,.85)" stroke-width="2" stroke-linecap="round"/>
+    <line x1="35" y1="42" x2="35" y2="50" stroke="rgba(245,144,100,.85)" stroke-width="2" stroke-linecap="round"/>
+  </svg>
+</div>
+
+<div id="scaleHint">Pincez pour redimensionner</div>
+
+<!-- GLB LOADER -->
+<div id="glbLoader"><div class="spin"></div><p id="glbLoaderText">Chargement…</p></div>
+
+<!-- SAVE TOAST -->
+<div id="saveToast"><span id="saveToastIcon">📸</span><span id="saveToastText">Capture !</span></div>
+
+<!-- START SCREEN -->
+<div id="startScreen">
+  <div class="startIcon">
+    <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+      <rect x="8" y="16" width="24" height="16" rx="3" fill="rgba(245,144,100,.3)" stroke="rgba(245,144,100,.7)" stroke-width="1.2"/>
+      <rect x="12" y="20" width="7" height="6" rx="1" fill="rgba(245,144,100,.8)"/>
+      <rect x="21" y="20" width="6" height="6" rx="1" fill="rgba(245,144,100,.4)"/>
+      <path d="M10 16 L20 8 L30 16" stroke="rgba(245,144,100,.6)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    </svg>
+  </div>
+  <div class="startTitle">PlaceAR</div>
+  <div class="startSub">Visualisez vos meubles en réalité augmentée directement chez vous</div>
+  <div class="startFeatures">
+    <div class="startFeature"><div class="startFeature-dot"></div>Détection automatique du sol</div>
+    <div class="startFeature"><div class="startFeature-dot"></div>Placement précis avec WebXR</div>
+    <div class="startFeature"><div class="startFeature-dot"></div>Rotation et redimensionnement</div>
+    <div class="startFeature"><div class="startFeature-dot"></div>Plusieurs produits simultanés</div>
+  </div>
+  <button id="startArBtn">🚀 Lancer la AR</button>
+  <div id="noXrMsg">WebXR non supporté sur cet appareil.<br>Mode caméra classique activé.</div>
+</div>
+
+<!-- TOP BAR -->
+<div id="topBar" style="display:none">
+  <div style="display:flex;align-items:center;gap:8px">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <rect x="2" y="8" width="20" height="12" rx="2.5" fill="rgba(255,255,255,.2)" stroke="rgba(255,255,255,.4)" stroke-width="1"/>
+      <rect x="4.5" y="10.5" width="5" height="4" rx="1" fill="rgba(255,255,255,.7)"/>
+      <rect x="11" y="10.5" width="4" height="4" rx="1" fill="rgba(255,255,255,.35)"/>
+    </svg>
+    <span id="appLogoText">PlaceAR</span>
+  </div>
+  <div id="topRight">
+    <div id="placedBadge">
+      <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><rect x="1" y="1" width="3.5" height="3.5" rx=".8" fill="currentColor"/><rect x="5.5" y="1" width="3.5" height="3.5" rx=".8" fill="currentColor" opacity=".5"/><rect x="1" y="5.5" width="3.5" height="3.5" rx=".8" fill="currentColor" opacity=".5"/><rect x="5.5" y="5.5" width="3.5" height="3.5" rx=".8" fill="currentColor" opacity=".3"/></svg>
+      <span id="placedCountEl">0</span> placé(s)
+    </div>
+    <div class="topPill"><div class="topPill-dot"></div><span>AR Live</span></div>
+  </div>
+</div>
+
+<!-- STATUS -->
+<div id="statusToast" style="display:none"><div id="statusDot"></div><span id="statusText">Initialisation…</span></div>
+
+<!-- ACTION BAR -->
+<div id="actionBar">
+  <div id="actionBarInner">
+    <div id="selectedProductName">—</div>
+    <div style="flex:1"></div>
+    <button class="aBtn" id="aBtnRotL">
+      <svg viewBox="0 0 18 18"><path d="M3 9a6 6 0 1 0 1.1-3.4"/><polyline points="1,3 3,6.5 6,4"/></svg>
+      <span>−Rot</span>
+    </button>
+    <button class="aBtn" id="aBtnRotR">
+      <svg viewBox="0 0 18 18"><path d="M15 9a6 6 0 1 1-1.1-3.4"/><polyline points="17,3 15,6.5 12,4"/></svg>
+      <span>+Rot</span>
+    </button>
+    <button class="aBtn" id="aBtnScaleUp">
+      <svg viewBox="0 0 18 18"><rect x="2" y="2" width="14" height="14" rx="2"/><line x1="9" y1="5" x2="9" y2="13"/><line x1="5" y1="9" x2="13" y2="9"/></svg>
+      <span>+</span>
+    </button>
+    <button class="aBtn" id="aBtnScaleDown">
+      <svg viewBox="0 0 18 18"><rect x="2" y="2" width="14" height="14" rx="2"/><line x1="5" y1="9" x2="13" y2="9"/></svg>
+      <span>−</span>
+    </button>
+    <button class="aBtn delete" id="aBtnDelete">
+      <svg viewBox="0 0 18 18"><polyline points="3,5 15,5"/><path d="M7 5V3h4v2"/><path d="M5 5l1 10h6l1-10"/></svg>
+      <span>Suppr.</span>
+    </button>
+    <button class="aBtn confirm" id="aBtnConfirm">
+      <svg viewBox="0 0 18 18"><polyline points="3,9 7,13 15,5"/></svg>
+      <span>OK</span>
+    </button>
+  </div>
+</div>
+
+<!-- BOTTOM SHEET -->
+<div id="sheet" class="collapsed" style="height:92px;display:none">
+  <div id="sheetHandle"><div id="handleBar"></div></div>
+  <div id="quickRow">
+    <button class="qBtn qBtn-danger" id="resetBtn" style="max-width:44px" title="Tout effacer">
+      <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round">
+        <path d="M1.5 6.5a5 5 0 1 0 1-3"/><polyline points="1.5,2.5 1.5,5 4,5"/>
+      </svg>
+    </button>
+    <button class="qBtn qBtn-primary" id="placeBtn" style="flex:2.5">⊕ Placer ici</button>
+    <button class="qBtn qBtn-ghost" id="captureBtn" style="max-width:44px" title="Capture">
+      <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round">
+        <path d="M1 4Q1 3 2 3L4 3 4.8 1.8 8.2 1.8 9 3 11 3Q12 3 12 4L12 11Q12 12 11 12L2 12Q1 12 1 11Z"/>
+        <circle cx="6.5" cy="7" r="2"/>
+      </svg>
+    </button>
+  </div>
+  <div id="sheetContent">
+    <div id="catTabs"><div class="catTab active" data-cat="all">Tous</div></div>
+    <div class="secLabel">Produits</div>
+    <div id="productScroll"><div style="padding:16px;color:var(--grey);font-size:11px">Chargement…</div></div>
+    <div class="secLabel">Réglages</div>
+    <div id="controlsGrid">
+      <div>
+        <div class="sliderHead">Taille <span class="val" id="scaleDisp">100</span>%</div>
+        <input type="range" id="scaleSlider" min="20" max="300" value="100"/>
+      </div>
+      <div>
+        <div class="sliderHead">Opacité <span class="val" id="opacDisp">90</span>%</div>
+        <input type="range" id="opacSlider" min="30" max="100" value="90"/>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- THREE.JS r128 + GLTFLoader -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+
+<script>
+/* ═══════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════ */
+const S = {
+  xrSupported: false,
+  xrSession: null,
+  xrMode: false,           // true = WebXR running
+  fallbackMode: false,     // true = camera fallback
+  catalog: [],
+  selectedProductId: null,
+  pendingPlace: false,
+  placedObjects: [],
+  selectedObjectId: null,
+  scaleMultiplier: 1.0,
+  opacity: 0.9,
+  touchStartDist: null,
+  touchStartScale: 1,
+  hitTestSource: null,
+  hitTestSourceInitialized: false,
+  reticleVisible: false,
+  currentHitMatrix: null,
+  meshIdCounter: 0,
+};
+
+/* ═══════════════════════════════════════════
+   DOM REFS
+═══════════════════════════════════════════ */
+const threeCanvas    = document.getElementById('threeCanvas');
+const startScreen    = document.getElementById('startScreen');
+const startArBtn     = document.getElementById('startArBtn');
+const noXrMsg        = document.getElementById('noXrMsg');
+const topBar         = document.getElementById('topBar');
+const sheet          = document.getElementById('sheet');
+const statusToast    = document.getElementById('statusToast');
+const statusText     = document.getElementById('statusText');
+const statusDot      = document.getElementById('statusDot');
+const placedBadge    = document.getElementById('placedBadge');
+const placedCountEl  = document.getElementById('placedCountEl');
+const actionBar      = document.getElementById('actionBar');
+const selProdName    = document.getElementById('selectedProductName');
+const xrReticle      = document.getElementById('xrReticle');
+const glbLoader      = document.getElementById('glbLoader');
+const glbLoaderText  = document.getElementById('glbLoaderText');
+const productScroll  = document.getElementById('productScroll');
+const catTabs        = document.getElementById('catTabs');
+const scaleHint      = document.getElementById('scaleHint');
+const videoEl        = document.getElementById('videoEl');
+
+function setStatus(msg, cls='') {
+  statusText.textContent = msg;
+  statusToast.className = cls;
+  statusToast.style.display = 'flex';
+}
+
+/* ═══════════════════════════════════════════
+   THREE.JS SETUP
+═══════════════════════════════════════════ */
+let scene, camera3, renderer3, loader;
+let xrReferenceSpace = null;
+let xrReticleMesh = null;  // Three.js reticle shown in the real world
+
+function initThreeJS() {
+  scene = new THREE.Scene();
+
+  camera3 = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 100);
+
+  renderer3 = new THREE.WebGLRenderer({
+    canvas: threeCanvas,
+    alpha: true,
+    antialias: true,
+    logarithmicDepthBuffer: true,
+  });
+  renderer3.setSize(window.innerWidth, window.innerHeight);
+  renderer3.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer3.outputEncoding = THREE.sRGBEncoding;
+  renderer3.physicallyCorrectLights = true;
+  renderer3.shadowMap.enabled = true;
+  renderer3.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer3.xr.enabled = true;   // ← KEY: enable WebXR in renderer
+
+  // Lights
+  const ambient = new THREE.AmbientLight(0xffffff, 1.4);
+  scene.add(ambient);
+  const dirLight = new THREE.DirectionalLight(0xffffff, 1.6);
+  dirLight.position.set(3, 8, 5);
+  dirLight.castShadow = true;
+  scene.add(dirLight);
+  const fillLight = new THREE.DirectionalLight(0xffffff, 0.5);
+  fillLight.position.set(-4, 2, -4);
+  scene.add(fillLight);
+
+  // 3D Reticle (shown in world space during hit-test)
+  const reticleGeometry = new THREE.RingGeometry(0.12, 0.15, 32).rotateX(-Math.PI / 2);
+  const reticleMaterial = new THREE.MeshBasicMaterial({ color: 0xF59064, side: THREE.DoubleSide });
+  xrReticleMesh = new THREE.Mesh(reticleGeometry, reticleMaterial);
+  xrReticleMesh.visible = false;
+  xrReticleMesh.matrixAutoUpdate = false;
+  scene.add(xrReticleMesh);
+
+  loader = new THREE.GLTFLoader();
+
+  window.addEventListener('resize', () => {
+    camera3.aspect = window.innerWidth / window.innerHeight;
+    camera3.updateProjectionMatrix();
+    renderer3.setSize(window.innerWidth, window.innerHeight);
+  });
+}
+
+/* ═══════════════════════════════════════════
+   WEBXR SESSION
+═══════════════════════════════════════════ */
+async function checkXRSupport() {
+  if (!navigator.xr) return false;
+  try {
+    const supported = await navigator.xr.isSessionSupported('immersive-ar');
+    return supported;
+  } catch {
+    return false;
+  }
+}
+
+async function startXRSession() {
+  try {
+    const session = await navigator.xr.requestSession('immersive-ar', {
+      requiredFeatures: ['hit-test'],
+      optionalFeatures: ['dom-overlay', 'light-estimation'],
+      domOverlay: { root: document.body },
+    });
+
+    S.xrSession = session;
+    S.xrMode = true;
+
+    renderer3.xr.setReferenceSpaceType('local');
+    await renderer3.xr.setSession(session);
+
+    xrReferenceSpace = await session.requestReferenceSpace('local');
+
+    // Hit test source
+    const viewerSpace = await session.requestReferenceSpace('viewer');
+    S.hitTestSource = await session.requestHitTestSource({ space: viewerSpace });
+    S.hitTestSourceInitialized = true;
+
+    session.addEventListener('end', onXRSessionEnd);
+
+    // Start render loop via WebXR
+    renderer3.setAnimationLoop(xrRenderLoop);
+
+    // Show UI
+    startScreen.classList.add('hidden');
+    topBar.style.display = 'flex';
+    sheet.style.display = 'flex';
+    statusToast.style.display = 'flex';
+    xrReticle.classList.add('visible');
+
+    setStatus('Pointez le sol pour placer', 'scanning');
+
+    postToFlutter({ type: 'xr_started' });
+
+    setTimeout(() => {
+      scaleHint.classList.add('visible');
+      setTimeout(() => scaleHint.classList.remove('visible'), 3000);
+    }, 4000);
+
+  } catch (err) {
+    console.error('WebXR error:', err);
+    setStatus('Erreur WebXR: ' + err.message, 'error');
+    // Fallback to camera mode
+    startFallbackMode();
+  }
+}
+
+function onXRSessionEnd() {
+  S.xrMode = false;
+  S.xrSession = null;
+  S.hitTestSourceInitialized = false;
+  S.hitTestSource = null;
+  renderer3.setAnimationLoop(null);
+  xrReticle.classList.remove('visible');
+  xrReticleMesh.visible = false;
+  setStatus('Session AR terminée', 'ok');
+}
+
+/* ═══════════════════════════════════════════
+   XR RENDER LOOP
+═══════════════════════════════════════════ */
+function xrRenderLoop(timestamp, frame) {
+  if (!frame) return;
+
+  const session = renderer3.xr.getSession();
+
+  // ── Hit test ──
+  if (S.hitTestSourceInitialized && S.hitTestSource) {
+    const hitTestResults = frame.getHitTestResults(S.hitTestSource);
+
+    if (hitTestResults.length > 0) {
+      const hit = hitTestResults[0];
+      const pose = hit.getPose(xrReferenceSpace);
+
+      if (pose) {
+        xrReticleMesh.visible = true;
+        xrReticle.classList.add('visible');
+        xrReticleMesh.matrix.fromArray(pose.transform.matrix);
+        S.currentHitMatrix = pose.transform.matrix;
+        S.reticleVisible = true;
+      }
+    } else {
+      xrReticle.classList.remove('visible');
+      S.reticleVisible = false;
+    }
+  }
+
+  renderer3.render(scene, camera3);
+}
+
+/* ═══════════════════════════════════════════
+   FALLBACK CAMERA MODE (non-WebXR)
+═══════════════════════════════════════════ */
+async function startFallbackMode() {
+  S.fallbackMode = true;
+  console.log('Starting fallback camera mode');
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
+      audio: false,
+    });
+    videoEl.srcObject = stream;
+    videoEl.style.display = 'block';
+    await videoEl.play();
+  } catch (e) {
+    setStatus('Caméra refusée', 'error');
+    return;
+  }
+
+  // Non-XR render loop
+  renderer3.setAnimationLoop(() => {
+    renderer3.render(scene, camera3);
+  });
+
+  // Floor plane for raycasting
+  const fl = new THREE.Mesh(
+    new THREE.PlaneGeometry(20, 20),
+    new THREE.MeshBasicMaterial({ visible: false, side: THREE.DoubleSide })
+  );
+  fl.rotation.x = -Math.PI / 2;
+  fl.name = 'floor';
+  scene.add(fl);
+
+  camera3.position.set(0, 1.2, 0);
+  camera3.lookAt(0, 0, -1.5);
+
+  startScreen.classList.add('hidden');
+  topBar.style.display = 'flex';
+  sheet.style.display = 'flex';
+  statusToast.style.display = 'flex';
+  xrReticle.classList.add('visible');
+  S.reticleVisible = true;
+  S.currentHitMatrix = null;
+
+  setStatus('Mode caméra (WebXR non dispo)', 'ok');
+
+  // Touch for placing in fallback mode
+  threeCanvas.addEventListener('click', (e) => {
+    if (!S.pendingPlace || !S.selectedProductId) return;
+    const pos = screenToFloor(e.clientX, e.clientY);
+    if (pos) placeProductAtPosition(pos);
+  });
+}
+
+/* ═══════════════════════════════════════════
+   TOUCH / TAP HANDLING (WebXR mode)
+═══════════════════════════════════════════ */
+// In WebXR, tap is handled via session select event
+function setupXRSelect() {
+  if (!S.xrSession) return;
+  S.xrSession.addEventListener('select', () => {
+    if (S.pendingPlace && S.selectedProductId && S.reticleVisible) {
+      const mat = xrReticleMesh.matrix;
+      const pos = new THREE.Vector3();
+      const quat = new THREE.Quaternion();
+      const scale = new THREE.Vector3();
+      mat.decompose(pos, quat, scale);
+      placeProductAtPosition(pos, quat);
+      S.pendingPlace = false;
+      setStatus('Placé ! Tapez pour en ajouter un autre', 'ok');
+    } else {
+      // Tap without pending = try to select existing object (simple ray from center)
+      const objHit = hitTestObjects();
+      if (objHit) selectObject(objHit.id);
+      else deselectObject();
+    }
+  });
+}
+
+// Raycaster for fallback mode
+const raycaster = new THREE.Raycaster();
+function screenToFloor(sx, sy) {
+  const nx = (sx / window.innerWidth) * 2 - 1;
+  const ny = -(sy / window.innerHeight) * 2 + 1;
+  raycaster.setFromCamera({ x: nx, y: ny }, camera3);
+  const fl = scene.getObjectByName('floor');
+  if (!fl) return null;
+  const hits = raycaster.intersectObject(fl);
+  return hits.length ? hits[0].point : new THREE.Vector3(nx * 2, 0, -(1.5 + ny));
+}
+
+function hitTestObjects() {
+  // Ray from screen center
+  raycaster.setFromCamera({ x: 0, y: 0 }, camera3);
+  const meshes = S.placedObjects.map(o => o.group);
+  const hits = raycaster.intersectObjects(meshes, true);
+  if (!hits.length) return null;
+  let h = hits[0].object;
+  while (h.parent && !h.userData.placeId) h = h.parent;
+  return S.placedObjects.find(o => o.id === h.userData.placeId) || null;
+}
+
+/* ═══════════════════════════════════════════
+   PLACE PRODUCT
+═══════════════════════════════════════════ */
+function placeProductAtPosition(pos, quat) {
+  const product = S.catalog.find(p => p.id === S.selectedProductId);
+  if (!product) return;
+
+  const group = new THREE.Group();
+  group.position.copy(pos);
+  if (quat) group.quaternion.copy(quat);
+  scene.add(group);
+
+  const id = ++S.meshIdCounter;
+  group.userData.placeId = id;
+
+  const entry = {
+    id,
+    group,
+    productId: product.id,
+    name: product.name,
+    rotY: 0,
+    scaleVal: S.scaleMultiplier,
+  };
+  S.placedObjects.push(entry);
+  updatePlacedBadge();
+
+  if (product.modelUrl && product.modelUrl.length > 4) {
+    glbLoader.classList.add('visible');
+    glbLoaderText.textContent = 'Chargement modèle 3D…';
+
+    loader.load(
+      product.modelUrl,
+      (gltf) => {
+        glbLoader.classList.remove('visible');
+        const model = gltf.scene;
+
+        model.traverse(c => {
+          if (c.isMesh) {
+            c.castShadow = true;
+            c.receiveShadow = true;
+            const mats = Array.isArray(c.material) ? c.material : [c.material];
+            c.material = mats.map(m => {
+              const mc = m.clone();
+              mc.transparent = S.opacity < 1.0;
+              mc.opacity = S.opacity;
+              mc.needsUpdate = true;
+              return mc;
+            });
+            if (!Array.isArray(c.material)) c.material = c.material;
+          }
+        });
+
+        // Auto-scale to ~0.6m
+        const bb = new THREE.Box3().setFromObject(model);
+        const size = bb.getSize(new THREE.Vector3());
+        const maxDim = Math.max(size.x, size.y, size.z);
+        if (maxDim > 0) model.scale.setScalar((0.6 / maxDim) * S.scaleMultiplier);
+
+        // Center horizontally
+        const bb2 = new THREE.Box3().setFromObject(model);
+        const center = bb2.getCenter(new THREE.Vector3());
+        model.position.x -= center.x;
+        model.position.z -= center.z;
+
+        group.add(model);
+        entry.model = model;
+        selectObject(id);
+      },
+      undefined,
+      (err) => {
+        glbLoader.classList.remove('visible');
+        console.error('GLB error', err);
+        const fb = new THREE.Mesh(
+          new THREE.BoxGeometry(0.4, 0.4, 0.4),
+          new THREE.MeshStandardMaterial({ color: 0xccaa88, transparent: true, opacity: S.opacity })
+        );
+        group.add(fb);
+        entry.model = fb;
+        selectObject(id);
+      }
+    );
+  } else {
+    // Fallback box
+    const fb = new THREE.Mesh(
+      new THREE.BoxGeometry(0.4, 0.4, 0.4),
+      new THREE.MeshStandardMaterial({ color: 0xccaa88, transparent: true, opacity: S.opacity })
+    );
+    group.add(fb);
+    entry.model = fb;
+    selectObject(id);
+  }
+
+  postToFlutter({ type: 'placed', count: S.placedObjects.length });
+}
+
+/* ═══════════════════════════════════════════
+   OBJECT MANAGEMENT
+═══════════════════════════════════════════ */
+function selectObject(id) {
+  S.selectedObjectId = id;
+  const obj = S.placedObjects.find(o => o.id === id);
+  if (!obj) return;
+  selProdName.textContent = obj.name || 'Objet';
+  actionBar.classList.add('visible');
+}
+function deselectObject() {
+  S.selectedObjectId = null;
+  actionBar.classList.remove('visible');
+}
+function rotateSelected(deg) {
+  const obj = S.placedObjects.find(o => o.id === S.selectedObjectId);
+  if (!obj) return;
+  obj.rotY += deg * Math.PI / 180;
+  obj.group.rotation.y = obj.rotY;
+}
+function scaleObject(obj, val) {
+  const c = Math.max(0.05, Math.min(8, val));
+  obj.scaleVal = c;
+  if (obj.model) {
+    // Re-scale model inside group
+    const product = S.catalog.find(p => p.id === obj.productId);
+    obj.group.scale.setScalar(c);
+  }
+}
+function deleteSelected() {
+  const obj = S.placedObjects.find(o => o.id === S.selectedObjectId);
+  if (!obj) return;
+  scene.remove(obj.group);
+  S.placedObjects = S.placedObjects.filter(o => o.id !== S.selectedObjectId);
+  deselectObject();
+  updatePlacedBadge();
+  postToFlutter({ type: 'removed', count: S.placedObjects.length });
+}
+function updatePlacedBadge() {
+  const n = S.placedObjects.length;
+  placedCountEl.textContent = n;
+  placedBadge.classList.toggle('visible', n > 0);
+}
+function updateAllOpacity() {
+  S.placedObjects.forEach(obj => {
+    obj.group.traverse(c => {
+      if (c.isMesh) {
+        const mats = Array.isArray(c.material) ? c.material : [c.material];
+        mats.forEach(m => {
+          m.transparent = S.opacity < 1.0;
+          m.opacity = S.opacity;
+          m.needsUpdate = true;
+        });
+      }
+    });
+  });
+}
+
+/* ═══════════════════════════════════════════
+   TOUCH PINCH (scale selected object)
+═══════════════════════════════════════════ */
+document.addEventListener('touchstart', e => {
+  if (e.touches.length === 2) {
+    S.touchStartDist = Math.hypot(
+      e.touches[0].clientX - e.touches[1].clientX,
+      e.touches[0].clientY - e.touches[1].clientY
+    );
+    const obj = S.placedObjects.find(o => o.id === S.selectedObjectId);
+    S.touchStartScale = obj ? obj.scaleVal : 1;
+  }
+}, { passive: true });
+
+document.addEventListener('touchmove', e => {
+  if (e.touches.length === 2 && S.touchStartDist) {
+    const d = Math.hypot(
+      e.touches[0].clientX - e.touches[1].clientX,
+      e.touches[0].clientY - e.touches[1].clientY
+    );
+    const obj = S.placedObjects.find(o => o.id === S.selectedObjectId);
+    if (obj) scaleObject(obj, S.touchStartScale * (d / S.touchStartDist));
+  }
+}, { passive: true });
+
+document.addEventListener('touchend', () => { S.touchStartDist = null; });
+
+/* ═══════════════════════════════════════════
+   ACTION BAR BUTTONS
+═══════════════════════════════════════════ */
+document.getElementById('aBtnRotL').addEventListener('click', () => rotateSelected(-20));
+document.getElementById('aBtnRotR').addEventListener('click', () => rotateSelected(20));
+document.getElementById('aBtnScaleUp').addEventListener('click', () => {
+  const o = S.placedObjects.find(o => o.id === S.selectedObjectId);
+  if (o) scaleObject(o, o.scaleVal * 1.2);
+});
+document.getElementById('aBtnScaleDown').addEventListener('click', () => {
+  const o = S.placedObjects.find(o => o.id === S.selectedObjectId);
+  if (o) scaleObject(o, o.scaleVal / 1.2);
+});
+document.getElementById('aBtnDelete').addEventListener('click', deleteSelected);
+document.getElementById('aBtnConfirm').addEventListener('click', deselectObject);
+
+/* ═══════════════════════════════════════════
+   BOTTOM SHEET
+═══════════════════════════════════════════ */
+const PEEK = 92, MID = 360, FULL = Math.round(window.innerHeight * 0.88);
+let shDragStartY = null, shDragStartH = 0;
+
+function setSheetH(h, anim = true) {
+  sheet.style.transition = anim ? 'height .35s cubic-bezier(.32,.72,0,1)' : 'none';
+  sheet.style.height = h + 'px';
+  sheet.classList.toggle('collapsed', h <= PEEK + 10);
+}
+function snapSheet(h) {
+  const m1 = (PEEK + MID) / 2, m2 = (MID + FULL) / 2;
+  setSheetH(h < m1 ? PEEK : h < m2 ? MID : FULL);
+}
+const handleEl = document.getElementById('sheetHandle');
+handleEl.addEventListener('mousedown', e => { shDragStartY = e.clientY; shDragStartH = sheet.getBoundingClientRect().height; sheet.style.transition = 'none'; });
+handleEl.addEventListener('touchstart', e => { shDragStartY = e.touches[0].clientY; shDragStartH = sheet.getBoundingClientRect().height; sheet.style.transition = 'none'; }, { passive: true });
+window.addEventListener('mousemove', e => { if (shDragStartY === null) return; const h = Math.max(PEEK, Math.min(FULL, shDragStartH + (shDragStartY - e.clientY))); sheet.style.height = h + 'px'; sheet.classList.toggle('collapsed', h <= PEEK + 10); });
+window.addEventListener('touchmove', e => { if (shDragStartY === null) return; const h = Math.max(PEEK, Math.min(FULL, shDragStartH + (shDragStartY - e.touches[0].clientY))); sheet.style.height = h + 'px'; sheet.classList.toggle('collapsed', h <= PEEK + 10); }, { passive: true });
+function onSheetDragEnd() { if (shDragStartY === null) return; const h = sheet.getBoundingClientRect().height; shDragStartY = null; snapSheet(h); }
+window.addEventListener('mouseup', onSheetDragEnd);
+window.addEventListener('touchend', onSheetDragEnd);
+handleEl.addEventListener('click', () => { const h = sheet.getBoundingClientRect().height; setSheetH(h <= PEEK + 10 ? MID : h >= FULL - 20 ? PEEK : FULL); });
+
+/* ═══════════════════════════════════════════
+   PLACE / RESET / CAPTURE BUTTONS
+═══════════════════════════════════════════ */
+document.getElementById('placeBtn').addEventListener('click', () => {
+  if (!S.selectedProductId && S.catalog.length > 0) {
+    selectProductById(S.catalog[0].id);
+    return;
+  }
+  if (!S.selectedProductId) return;
+
+  if (S.xrMode) {
+    // In XR mode: arm pending place, next tap (select event) will place it
+    S.pendingPlace = true;
+    setStatus('Tapez sur le sol pour placer', 'scanning');
+    setSheetH(PEEK);
+  } else {
+    // Fallback: place at center of screen
+    if (S.currentHitMatrix) {
+      const pos = new THREE.Vector3(0, 0, -1.5);
+      placeProductAtPosition(pos, null);
+    } else {
+      placeProductAtPosition(new THREE.Vector3(0, 0, -1.5), null);
+    }
+    S.pendingPlace = false;
+  }
+});
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  S.placedObjects.forEach(o => scene.remove(o.group));
+  S.placedObjects = [];
+  deselectObject();
+  updatePlacedBadge();
+  S.selectedProductId = null;
+  S.pendingPlace = false;
+  updateActiveCards();
+  setStatus('Réinitialisé', 'ok');
+  postToFlutter({ type: 'removed', count: 0 });
+});
+
+document.getElementById('captureBtn').addEventListener('click', doCapture);
+
+/* ═══════════════════════════════════════════
+   SLIDERS
+═══════════════════════════════════════════ */
+document.getElementById('scaleSlider').addEventListener('input', e => {
+  S.scaleMultiplier = parseInt(e.target.value) / 100;
+  document.getElementById('scaleDisp').textContent = e.target.value;
+  const o = S.placedObjects.find(o => o.id === S.selectedObjectId);
+  if (o) scaleObject(o, S.scaleMultiplier);
+});
+document.getElementById('opacSlider').addEventListener('input', e => {
+  S.opacity = parseInt(e.target.value) / 100;
+  document.getElementById('opacDisp').textContent = e.target.value;
+  updateAllOpacity();
+});
+
+/* ═══════════════════════════════════════════
+   CATALOG / PRODUCTS
+═══════════════════════════════════════════ */
+window.loadProductCatalog = function (products) {
+  console.log('[PlaceAR] Catalog received:', products.length, 'products');
+  S.catalog = products;
+  buildCategoryTabs(products);
+  renderProductCards(products);
+  setStatus(products.length + ' produit(s) chargé(s)', 'ok');
+  setSheetH(MID);
+};
+
+function buildCategoryTabs(products) {
+  const cats = [...new Set(products.map(p => p.category).filter(Boolean))];
+  catTabs.innerHTML = '';
+  const all = document.createElement('div');
+  all.className = 'catTab active'; all.dataset.cat = 'all'; all.textContent = 'Tous';
+  all.addEventListener('click', () => switchCat('all', all));
+  catTabs.appendChild(all);
+  cats.forEach(cat => {
+    const tab = document.createElement('div');
+    tab.className = 'catTab'; tab.dataset.cat = cat;
+    tab.textContent = cat.charAt(0).toUpperCase() + cat.slice(1);
+    tab.addEventListener('click', () => switchCat(cat, tab));
+    catTabs.appendChild(tab);
+  });
+}
+
+function switchCat(cat, tabEl) {
+  document.querySelectorAll('.catTab').forEach(t => t.classList.remove('active'));
+  if (tabEl) tabEl.classList.add('active');
+  const filtered = cat === 'all' ? S.catalog : S.catalog.filter(p => p.category === cat);
+  renderProductCards(filtered);
+}
+
+function renderProductCards(products) {
+  productScroll.innerHTML = '';
+  if (!products.length) {
+    productScroll.innerHTML = '<div style="padding:16px;color:var(--grey);font-size:11px">Aucun produit</div>';
+    return;
+  }
+  products.forEach(p => {
+    const card = document.createElement('div');
+    card.className = 'prodCard' + (S.selectedProductId === p.id ? ' active' : '');
+    card.dataset.id = p.id;
+    const imgSrc = p.imageUrl || p.thumbnail || '';
+    card.innerHTML =
+      '<img class="prodCard-img" src="' + escapeHtml(imgSrc) + '" onerror="this.style.background=\'#c8d0d8\'" loading="lazy">' +
+      '<div class="prodCard-body">' +
+        '<div class="prodCard-name">' + escapeHtml(p.name || 'Produit') + '</div>' +
+        '<div class="prodCard-sub">' + escapeHtml(p.category || '') + '</div>' +
+      '</div>' +
+      '<div class="prodCard-badge">' + escapeHtml(p.category || '') + '</div>';
+    card.addEventListener('click', () => selectProductById(p.id));
+    productScroll.appendChild(card);
+  });
+}
+
+function selectProductById(id) {
+  S.selectedProductId = id;
+  S.pendingPlace = true;
+  const p = S.catalog.find(p => p.id === id);
+  if (p) {
+    setStatus(escapeHtml(p.name || '') + ' — tapez le sol pour placer', 'scanning');
+    setSheetH(PEEK);
+  }
+  updateActiveCards();
+  xrReticle.classList.add('visible');
+}
+
+function updateActiveCards() {
+  document.querySelectorAll('.prodCard').forEach(c => {
+    c.classList.toggle('active', c.dataset.id === S.selectedProductId);
+  });
+}
+
+/* ═══════════════════════════════════════════
+   CAPTURE
+═══════════════════════════════════════════ */
+async function doCapture() {
+  const showSaveToast = (icon, txt) => {
+    document.getElementById('saveToastIcon').textContent = icon;
+    document.getElementById('saveToastText').textContent = txt;
+    const t = document.getElementById('saveToast');
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2200);
+  };
+
+  try {
+    renderer3.render(scene, camera3);
+    threeCanvas.toBlob(async blob => {
+      if (!blob) return;
+      const file = new File([blob], 'placeAR.png', { type: 'image/png' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({ files: [file], title: 'PlaceAR' });
+          showSaveToast('📸', 'Partagé !');
+          return;
+        } catch {}
+      }
+      const a = document.createElement('a');
+      a.download = 'placeAR.png';
+      a.href = URL.createObjectURL(blob);
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+      showSaveToast('💾', 'Image sauvegardée !');
+    }, 'image/png');
+  } catch (e) {
+    showSaveToast('❌', 'Erreur capture');
+  }
+  postToFlutter({ type: 'capture' });
+}
+
+/* ═══════════════════════════════════════════
+   FLUTTER BRIDGE
+═══════════════════════════════════════════ */
+function postToFlutter(obj) {
+  try {
+    // flutter_inappwebview channel
+    if (window.flutter_inappwebview) {
+      window.flutter_inappwebview.callHandler('FlutterBridge', JSON.stringify(obj));
+      return;
+    }
+    // JavaScriptChannel (webview_flutter)
+    if (typeof FlutterBridge !== 'undefined') {
+      FlutterBridge.postMessage(JSON.stringify(obj));
+      return;
+    }
+    // WKWebView / UIWebView
+    if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.FlutterBridge) {
+      window.webkit.messageHandlers.FlutterBridge.postMessage(JSON.stringify(obj));
+    }
+  } catch (e) {
+    console.log('[Bridge]', obj);
+  }
+}
+
+window.receiveFromFlutter = function (jsonStr) {
+  try {
+    const data = JSON.parse(jsonStr);
+    if (data.type === 'catalog' && data.products) {
+      window.loadProductCatalog(data.products);
+    }
+    if (data.type === 'clear') {
+      S.placedObjects.forEach(o => scene && scene.remove(o.group));
+      S.placedObjects = [];
+      deselectObject();
+      updatePlacedBadge();
+    }
+  } catch (e) {
+    console.error('receiveFromFlutter', e);
+  }
+};
+
+/* ═══════════════════════════════════════════
+   URL PARAMS (Flutter passes products via URL)
+═══════════════════════════════════════════ */
+function loadFromUrlParams() {
+  const params = new URLSearchParams(window.location.search);
+  const productsParam = params.get('products');
+  if (productsParam) {
+    try {
+      const products = JSON.parse(decodeURIComponent(productsParam));
+      // Map Flutter product format → internal format
+      const mapped = products.map(p => ({
+        id: p.id || p._id,
+        name: p.name,
+        modelUrl: p.modelUrl || p.model3D || p.modelUrl || '',
+        imageUrl: p.imageUrl || p.image || p.thumbnail || '',
+        category: p.category || 'Furniture',
+      }));
+      setTimeout(() => window.loadProductCatalog(mapped), 500);
+    } catch (e) {
+      console.error('Failed to parse products from URL', e);
+    }
+  }
+}
+
+/* ═══════════════════════════════════════════
+   UTILS
+═══════════════════════════════════════════ */
+function escapeHtml(s) {
+  if (!s) return '';
+  return s.toString().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+/* ═══════════════════════════════════════════
+   MOCK CATALOG (dev fallback)
+═══════════════════════════════════════════ */
+const MOCK_CATALOG = [
+  { id: 'm1', name: 'Canapé Moderne', category: 'Salon', modelUrl: '', imageUrl: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=200' },
+  { id: 'm2', name: 'Table Basse', category: 'Salon', modelUrl: '', imageUrl: 'https://images.unsplash.com/photo-1533090161767-e6ffed986c88?w=200' },
+  { id: 'm3', name: 'Lampadaire', category: 'Éclairage', modelUrl: '', imageUrl: 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=200' },
+];
+
+/* ═══════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════ */
+initThreeJS();
+loadFromUrlParams();
+
+startArBtn.addEventListener('click', async () => {
+  startArBtn.disabled = true;
+  startArBtn.textContent = 'Vérification…';
+
+  S.xrSupported = await checkXRSupport();
+
+  if (S.xrSupported) {
+    await startXRSession();
+    // Setup select event after session is ready
+    setupXRSelect();
+  } else {
+    noXrMsg.style.display = 'block';
+    startArBtn.textContent = '📷 Mode Caméra';
+    startArBtn.disabled = false;
+    startArBtn.onclick = startFallbackMode;
+    await startFallbackMode();
+  }
+
+  // Load mock if no products after 2s
+  setTimeout(() => {
+    if (S.catalog.length === 0) {
+      console.log('[PlaceAR] Using mock catalog');
+      window.loadProductCatalog(MOCK_CATALOG);
+    }
+  }, 2000);
+});
+</script>
+</body>
+</html>
