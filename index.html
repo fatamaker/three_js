@@ -633,68 +633,128 @@ function placeProductAtPosition(pos, quat) {
     glbLoader.classList.add('visible');
     glbLoaderText.textContent = 'Chargement modèle 3D…';
 
-    loader.load(
-      product.modelUrl,
-      (gltf) => {
-        glbLoader.classList.remove('visible');
-        const model = gltf.scene;
+   
+        console.log("🚀 TRY LOAD:", product.modelUrl);
 
-        model.traverse(c => {
-          if (c.isMesh) {
-            c.castShadow = true;
-            c.receiveShadow = true;
-            const mats = Array.isArray(c.material) ? c.material : [c.material];
-            c.material = mats.map(m => {
-              const mc = m.clone();
-              mc.transparent = S.opacity < 1.0;
-              mc.opacity = S.opacity;
-              mc.needsUpdate = true;
-              return mc;
-            });
-            if (!Array.isArray(c.material)) c.material = c.material;
-          }
+loader.load(
+  product.modelUrl,
+
+  // ✅ SUCCESS
+  (gltf) => {
+    console.log("✅ GLB LOADED SUCCESS");
+    console.log("📦 GLTF:", gltf);
+
+    glbLoader.classList.remove('visible');
+
+    const model = gltf.scene;
+
+    if (!model) {
+      console.error("❌ model is null !");
+      return;
+    }
+
+    console.log("📐 Children count:", model.children.length);
+
+    model.traverse(c => {
+      if (c.isMesh) {
+        console.log("🧱 Mesh found:", c.name);
+
+        c.castShadow = true;
+        c.receiveShadow = true;
+
+        const mats = Array.isArray(c.material) ? c.material : [c.material];
+
+        c.material = mats.map(m => {
+          const mc = m.clone();
+          mc.transparent = S.opacity < 1.0;
+          mc.opacity = S.opacity;
+          mc.needsUpdate = true;
+          return mc;
         });
-
-        // Auto-scale to ~0.6m
-        const bb = new THREE.Box3().setFromObject(model);
-        const size = bb.getSize(new THREE.Vector3());
-        const maxDim = Math.max(size.x, size.y, size.z);
-        if (maxDim > 0) model.scale.setScalar((0.6 / maxDim) * S.scaleMultiplier);
-
-        // Center horizontally
-        const bb2 = new THREE.Box3().setFromObject(model);
-        const center = bb2.getCenter(new THREE.Vector3());
-        model.position.x -= center.x;
-        model.position.z -= center.z;
-
-        group.add(model);
-        entry.model = model;
-        selectObject(id);
-      },
-      undefined,
-      (err) => {
-        glbLoader.classList.remove('visible');
-        console.error('GLB error', err);
-        const fb = new THREE.Mesh(
-          new THREE.BoxGeometry(0.4, 0.4, 0.4),
-          new THREE.MeshStandardMaterial({ color: 0xccaa88, transparent: true, opacity: S.opacity })
-        );
-        group.add(fb);
-        entry.model = fb;
-        selectObject(id);
       }
-    );
-  } else {
-    // Fallback box
+    });
+
+    const bb = new THREE.Box3().setFromObject(model);
+    const size = bb.getSize(new THREE.Vector3());
+    const maxDim = Math.max(size.x, size.y, size.z);
+
+    console.log("📏 SIZE:", size);
+
+    if (maxDim > 0) {
+      model.scale.setScalar((0.6 / maxDim) * S.scaleMultiplier);
+    } else {
+      console.warn("⚠️ maxDim = 0 → modèle invisible !");
+    }
+
+    const bb2 = new THREE.Box3().setFromObject(model);
+    const center = bb2.getCenter(new THREE.Vector3());
+
+    model.position.x -= center.x;
+    model.position.z -= center.z;
+
+    group.add(model);
+    entry.model = model;
+
+    console.log("✅ MODEL ADDED TO SCENE");
+
+    selectObject(id);
+  },
+
+  // ⏳ PROGRESS
+  (progress) => {
+    if (progress.total > 0) {
+      const percent = (progress.loaded / progress.total * 100).toFixed(2);
+      console.log(`⏳ Loading: ${percent}%`);
+    } else {
+      console.log("⏳ Loading... (no total)");
+    }
+  },
+
+  // ❌ ERROR
+  (err) => {
+    glbLoader.classList.remove('visible');
+
+    console.error("❌ GLB ERROR:", err);
+    console.error("❌ URL:", product.modelUrl);
+
+    if (err?.message) {
+      console.error("❌ MESSAGE:", err.message);
+    }
+
+    // fallback cube
     const fb = new THREE.Mesh(
       new THREE.BoxGeometry(0.4, 0.4, 0.4),
-      new THREE.MeshStandardMaterial({ color: 0xccaa88, transparent: true, opacity: S.opacity })
+      new THREE.MeshStandardMaterial({
+        color: 0xccaa88,
+        transparent: true,
+        opacity: S.opacity
+      })
     );
+
     group.add(fb);
     entry.model = fb;
+
+    console.log("⚠️ FALLBACK BOX USED");
+
     selectObject(id);
   }
+);
 
+  } else {
+    // No model, just a placeholder box
+    const placeholder = new THREE.Mesh(
+      new THREE.BoxGeometry(0.4, 0.4, 0.4),
+      new THREE.MeshStandardMaterial({
+        color: 0xccaa88,
+        transparent: true,
+        opacity: S.opacity
+      })
+    );
+    group.add(placeholder);
+    entry.model = placeholder;
+    selectObject(id);
+  }
+    
   postToFlutter({ type: 'placed', count: S.placedObjects.length });
 }
 
@@ -891,7 +951,9 @@ window.loadProductCatalog = function (products) {
   setStatus(products.length + ' produit(s) chargé(s)', 'ok');
   setSheetH(MID);
 };
-
+window.onerror = function (msg, url, line, col, error) {
+  console.error("💥 GLOBAL ERROR:", msg, url, line, col, error);
+};
 function buildCategoryTabs(products) {
   const cats = [...new Set(products.map(p => p.category).filter(Boolean))];
   catTabs.innerHTML = '';
