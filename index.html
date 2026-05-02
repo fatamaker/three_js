@@ -643,19 +643,13 @@ model.position.y += 0.01; // 🔥 AJOUTE ÇA
 
         // ── STEP 4 : materials ──
         model.traverse(c => {
-          if (c.isMesh) {
-            c.castShadow = true;
-            c.receiveShadow = true;
-            const mats = Array.isArray(c.material) ? c.material : [c.material];
-            c.material = mats.map(m => {
-              const mc = m.clone();
-              mc.transparent = S.opacity < 1.0;
-              mc.opacity = S.opacity;
-              mc.needsUpdate = true;
-              return mc;
-            });
-          }
-        });
+  if (c.isMesh) {
+    c.material = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      side: THREE.DoubleSide
+    });
+  }
+});
 
         group.add(model);
         entry.model = model;
