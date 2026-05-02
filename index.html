@@ -8,24 +8,14 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --primary:#F59064;
-  --secondary:#284F75;
-  --lg:#F0F0F0;
-  --lg2:#F7F7F7;
-  --dg:#6E6E6E;
-  --hint:#474747;
-  --grey:#AAAAAA;
-  --green:#52B46B;
-  --red:#DD5050;
-  --white:#ffffff;
+  --primary:#F59064;--secondary:#284F75;--lg:#F0F0F0;--lg2:#F7F7F7;--dg:#6E6E6E;
+  --hint:#474747;--grey:#AAAAAA;--green:#52B46B;--red:#DD5050;--white:#ffffff;
   --font:'Montserrat',sans-serif;
   --r-sm:8px;--r-md:14px;--r-lg:22px;--r-xl:32px;
   --shadow:0 8px 40px rgba(40,79,117,0.18);
 }
 html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:var(--font)}
 #threeCanvas{position:fixed;inset:0;width:100%;height:100%;z-index:0}
-#reticle{position:fixed;z-index:3;pointer-events:none;transform:translate(-50%,-50%);opacity:0;transition:opacity .3s;top:50%;left:50%}
-#reticle.visible{opacity:1}
 #topBar{position:fixed;top:0;left:0;right:0;z-index:20;display:flex;align-items:center;justify-content:space-between;padding:14px 18px 10px;background:linear-gradient(to bottom,rgba(0,0,0,.65) 0%,transparent 100%);pointer-events:none}
 #topBar>*{pointer-events:auto}
 #appLogoText{font-size:16px;font-weight:700;color:#fff;letter-spacing:-.3px}
@@ -34,7 +24,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:var
 .topPill-dot{width:5px;height:5px;border-radius:50%;background:var(--green);animation:pulse .9s infinite}
 #placedBadge{display:none;align-items:center;gap:5px;padding:4px 11px;border-radius:20px;background:rgba(245,144,100,.18);border:1px solid rgba(245,144,100,.4);font-size:10px;font-weight:700;color:var(--primary)}
 #placedBadge.visible{display:flex}
-#statusToast{position:fixed;top:68px;left:50%;transform:translateX(-50%);z-index:19;display:flex;align-items:center;gap:7px;padding:7px 16px;border-radius:var(--r-xl);font-size:11px;font-weight:500;color:rgba(255,255,255,.9);background:rgba(17,17,17,.78);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.1);white-space:nowrap;pointer-events:none;max-width:90vw}
+#statusToast{position:fixed;top:68px;left:50%;transform:translateX(-50%);z-index:19;display:flex;align-items:center;gap:7px;padding:7px 16px;border-radius:var(--r-xl);font-size:11px;font-weight:500;color:rgba(255,255,255,.9);background:rgba(17,17,17,.78);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.1);white-space:nowrap;pointer-events:none;max-width:90vw;animation:fadeInDown .3s ease}
 #statusDot{width:6px;height:6px;border-radius:50%;background:var(--grey);flex-shrink:0;transition:background .3s}
 #statusToast.ok #statusDot{background:var(--green)}
 #statusToast.scanning #statusDot{background:var(--primary);animation:pulse .8s infinite}
@@ -42,7 +32,6 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:var
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes fadeInDown{from{opacity:0;transform:translateX(-50%) translateY(-10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
-#statusToast{animation:fadeInDown .3s ease}
 #glbLoader{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;flex-direction:column;gap:14px}
 #glbLoader.visible{display:flex}
 .spin{width:34px;height:34px;border:3px solid rgba(245,144,100,.25);border-top-color:var(--primary);border-radius:50%;animation:spin .7s linear infinite}
@@ -103,8 +92,15 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;heigh
 #videoEl{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;display:none}
 #saveToast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:200;display:flex;flex-direction:column;align-items:center;gap:10px;padding:24px 32px;background:rgba(20,30,40,.92);backdrop-filter:blur(20px);border-radius:var(--r-lg);border:1px solid rgba(255,255,255,.15);color:#fff;font-size:13px;font-weight:600;pointer-events:none;opacity:0;transition:opacity .3s;text-align:center}
 #saveToast.show{opacity:1}
+/* Reticule dynamique selon surface */
 #xrReticle{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:5;pointer-events:none;opacity:0;transition:opacity .4s}
 #xrReticle.visible{opacity:1}
+/* Label surface sous le reticule */
+#surfaceLabel{position:fixed;top:calc(50% + 46px);left:50%;transform:translateX(-50%);z-index:6;padding:3px 10px;border-radius:12px;font-size:9px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;pointer-events:none;opacity:0;transition:all .3s;white-space:nowrap}
+#surfaceLabel.visible{opacity:1}
+#surfaceLabel.floor{background:rgba(82,180,107,.25);color:#52B46B;border:1px solid rgba(82,180,107,.4)}
+#surfaceLabel.wall{background:rgba(40,79,117,.25);color:#6fa3d8;border:1px solid rgba(40,79,117,.4)}
+#surfaceLabel.ceiling{background:rgba(245,144,100,.25);color:#F59064;border:1px solid rgba(245,144,100,.4)}
 #scaleHint{position:fixed;bottom:160px;left:50%;transform:translateX(-50%);z-index:19;padding:6px 14px;border-radius:20px;background:rgba(0,0,0,.6);color:rgba(255,255,255,.8);font-size:10px;font-weight:500;pointer-events:none;opacity:0;transition:opacity .3s}
 #scaleHint.visible{opacity:1}
 </style>
@@ -114,14 +110,34 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;heigh
 <video id="videoEl" autoplay playsinline muted></video>
 <canvas id="threeCanvas"></canvas>
 
+<!-- Reticule SVG — 3 couches, une visible à la fois selon la surface -->
 <div id="xrReticle">
-  <svg width="70" height="70" viewBox="0 0 70 70" fill="none">
-    <ellipse cx="35" cy="35" rx="30" ry="11" stroke="rgba(245,144,100,.85)" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <!-- SOL : ellipse horizontale -->
+  <svg id="reticleSvgFloor" width="70" height="70" viewBox="0 0 70 70" fill="none">
+    <ellipse cx="35" cy="35" rx="30" ry="11" stroke="rgba(82,180,107,.9)" stroke-width="1.5" stroke-dasharray="6 4"/>
+    <circle cx="35" cy="35" r="3" fill="#52B46B"/>
+    <line x1="35" y1="20" x2="35" y2="28" stroke="rgba(82,180,107,.9)" stroke-width="2" stroke-linecap="round"/>
+    <line x1="35" y1="42" x2="35" y2="50" stroke="rgba(82,180,107,.9)" stroke-width="2" stroke-linecap="round"/>
+  </svg>
+  <!-- MUR : rectangle vertical -->
+  <svg id="reticleSvgWall" width="70" height="70" viewBox="0 0 70 70" fill="none" style="display:none;position:absolute;top:0;left:0">
+    <rect x="12" y="8" width="46" height="54" rx="3" stroke="rgba(111,163,216,.9)" stroke-width="1.5" stroke-dasharray="6 4"/>
+    <circle cx="35" cy="35" r="3" fill="#6fa3d8"/>
+    <line x1="35" y1="14" x2="35" y2="28" stroke="rgba(111,163,216,.9)" stroke-width="2" stroke-linecap="round"/>
+    <line x1="35" y1="42" x2="35" y2="56" stroke="rgba(111,163,216,.9)" stroke-width="2" stroke-linecap="round"/>
+    <line x1="18" y1="35" x2="28" y2="35" stroke="rgba(111,163,216,.9)" stroke-width="2" stroke-linecap="round"/>
+    <line x1="42" y1="35" x2="52" y2="35" stroke="rgba(111,163,216,.9)" stroke-width="2" stroke-linecap="round"/>
+  </svg>
+  <!-- PLAFOND : ellipse inversée + flèche vers le haut -->
+  <svg id="reticleSvgCeiling" width="70" height="70" viewBox="0 0 70 70" fill="none" style="display:none;position:absolute;top:0;left:0">
+    <ellipse cx="35" cy="35" rx="30" ry="11" stroke="rgba(245,144,100,.9)" stroke-width="1.5" stroke-dasharray="6 4"/>
     <circle cx="35" cy="35" r="3" fill="#F59064"/>
-    <line x1="35" y1="20" x2="35" y2="28" stroke="rgba(245,144,100,.85)" stroke-width="2" stroke-linecap="round"/>
-    <line x1="35" y1="42" x2="35" y2="50" stroke="rgba(245,144,100,.85)" stroke-width="2" stroke-linecap="round"/>
+    <line x1="35" y1="42" x2="35" y2="50" stroke="rgba(245,144,100,.9)" stroke-width="2" stroke-linecap="round"/>
+    <line x1="35" y1="20" x2="35" y2="28" stroke="rgba(245,144,100,.9)" stroke-width="2" stroke-linecap="round"/>
+    <polyline points="29,25 35,18 41,25" stroke="rgba(245,144,100,.9)" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
   </svg>
 </div>
+<div id="surfaceLabel">Sol</div>
 
 <div id="scaleHint">Pincez pour redimensionner</div>
 <div id="glbLoader"><div class="spin"></div><p id="glbLoaderText">Chargement…</p></div>
@@ -139,7 +155,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;heigh
   <div class="startTitle">PlaceAR</div>
   <div class="startSub">Visualisez vos meubles en réalité augmentée directement chez vous</div>
   <div class="startFeatures">
-    <div class="startFeature"><div class="startFeature-dot"></div>Détection automatique du sol</div>
+    <div class="startFeature"><div class="startFeature-dot"></div>Détection sol, murs et plafond</div>
     <div class="startFeature"><div class="startFeature-dot"></div>Placement précis avec WebXR</div>
     <div class="startFeature"><div class="startFeature-dot"></div>Rotation et redimensionnement</div>
     <div class="startFeature"><div class="startFeature-dot"></div>Plusieurs produits simultanés</div>
@@ -237,128 +253,44 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;heigh
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/environments/RoomEnvironment.js"></script>
 <script>
-/* ═══════════════════════════════════════════
+/* ═══════════════════════════════════════
    STATE
-═══════════════════════════════════════════ */
+═══════════════════════════════════════ */
 const S = {
-  xrSupported: false,
-  xrSession: null,
-  xrMode: false,
-  fallbackMode: false,
-  catalog: [],
-  selectedProductId: null,
-  pendingPlace: false,
-  placedObjects: [],
-  selectedObjectId: null,
-  scaleMultiplier: 1.0,
-  opacity: 0.9,
-  touchStartDist: null,
-  touchStartScale: 1,
-  hitTestSource: null,
-  hitTestSourceInitialized: false,
-  reticleVisible: false,
-  currentHitMatrix: null,
-  meshIdCounter: 0,
+  xrSupported: false, xrSession: null, xrMode: false, fallbackMode: false,
+  catalog: [], selectedProductId: null, pendingPlace: false,
+  placedObjects: [], selectedObjectId: null,
+  scaleMultiplier: 1.0, opacity: 0.9,
+  touchStartDist: null, touchStartScale: 1,
+  hitTestSource: null, hitTestSourceInitialized: false,
+  reticleVisible: false, currentHitMatrix: null, meshIdCounter: 0,
   currentSurfaceType: 'floor',   // 'floor' | 'wall' | 'ceiling'
-detectedPlanes: new Map(), 
+  detectedPlanes: new Map(),
 };
-// Détermine floor / wall / ceiling depuis la normale du hit pose
-function getSurfaceTypeFromPose(pose) {
-  // La normale "up" du plan est l'axe Y de la matrice de pose
-  const m = pose.transform.matrix;
-  // Composante Y de l'axe Y local (index 5 dans column-major)
-  const normalY = m[5];
-  // Composante Y de l'axe Z local (index 9) → pour les plans verticaux
-  const normalZ = m[9];
 
-  if (Math.abs(normalY) > 0.7) {
-    // Plan horizontal
-    return normalY > 0 ? 'floor' : 'ceiling';
-  } else {
-    return 'wall';
-  }
-}
-
-// Met à jour le reticule et le toast selon le type de surface
-function updateSurfaceUI(type) {
-  const labels = {
-    floor:   '⬇ Sol détecté — tapez pour placer',
-    wall:    '⬅ Mur détecté — tapez pour placer',
-    ceiling: '⬆ Plafond détecté — tapez pour placer',
-  };
-  const colors = { floor: '#52B46B', wall: '#284F75', ceiling: '#F59064' };
-
-  if (S.pendingPlace) {
-    setStatus(labels[type] || labels.floor, 'scanning');
-  }
-  // Change la couleur du reticule selon la surface
-  if (xrReticleMesh) {
-    xrReticleMesh.material.color.set(colors[type] || colors.floor);
-  }
-}
-
-// Visualise les plans détectés avec un mesh semi-transparent
-function visualizePlane(plane, pose) {
-  if (!S.detectedPlanes) S.detectedPlanes = new Map();
-
-  let planeMesh = S.detectedPlanes.get(plane);
-
-  if (!planeMesh) {
-    const type = plane.orientation === 'vertical' ? 'wall' : 'floor';
-    const color = type === 'wall' ? 0x284F75 : type === 'ceiling' ? 0xF59064 : 0x52B46B;
-
-    const geo = new THREE.PlaneGeometry(1, 1);
-    const mat = new THREE.MeshBasicMaterial({
-      color,
-      transparent: true,
-      opacity: 0.12,
-      side: THREE.DoubleSide,
-      depthWrite: false,
-    });
-    planeMesh = new THREE.Mesh(geo, mat);
-    planeMesh.name = 'detectedPlane_' + type;
-    scene.add(planeMesh);
-    S.detectedPlanes.set(plane, planeMesh);
-  }
-
-  // Met à jour la pose du plan
-  const m = new THREE.Matrix4().fromArray(pose.transform.matrix);
-  planeMesh.matrix.copy(m);
-  planeMesh.matrixAutoUpdate = false;
-
-  // Redimensionne selon le polygon du plan
-  if (plane.polygon && plane.polygon.length > 2) {
-    let maxX = 0, maxZ = 0;
-    plane.polygon.forEach(p => {
-      maxX = Math.max(maxX, Math.abs(p.x));
-      maxZ = Math.max(maxZ, Math.abs(p.z));
-    });
-    planeMesh.scale.set(maxX * 2, maxZ * 2, 1);
-  }
-}
-/* ═══════════════════════════════════════════
+/* ═══════════════════════════════════════
    DOM REFS
-═══════════════════════════════════════════ */
-const threeCanvas    = document.getElementById('threeCanvas');
-const startScreen    = document.getElementById('startScreen');
-const startArBtn     = document.getElementById('startArBtn');
-const noXrMsg        = document.getElementById('noXrMsg');
-const topBar         = document.getElementById('topBar');
-const sheet          = document.getElementById('sheet');
-const statusToast    = document.getElementById('statusToast');
-const statusText     = document.getElementById('statusText');
-const statusDot      = document.getElementById('statusDot');
-const placedBadge    = document.getElementById('placedBadge');
-const placedCountEl  = document.getElementById('placedCountEl');
-const actionBar      = document.getElementById('actionBar');
-const selProdName    = document.getElementById('selectedProductName');
-const xrReticle      = document.getElementById('xrReticle');
-const glbLoader      = document.getElementById('glbLoader');
-const glbLoaderText  = document.getElementById('glbLoaderText');
-const productScroll  = document.getElementById('productScroll');
-const catTabs        = document.getElementById('catTabs');
-const scaleHint      = document.getElementById('scaleHint');
-const videoEl        = document.getElementById('videoEl');
+═══════════════════════════════════════ */
+const threeCanvas   = document.getElementById('threeCanvas');
+const startScreen   = document.getElementById('startScreen');
+const startArBtn    = document.getElementById('startArBtn');
+const noXrMsg       = document.getElementById('noXrMsg');
+const topBar        = document.getElementById('topBar');
+const sheet         = document.getElementById('sheet');
+const statusToast   = document.getElementById('statusToast');
+const statusText    = document.getElementById('statusText');
+const placedBadge   = document.getElementById('placedBadge');
+const placedCountEl = document.getElementById('placedCountEl');
+const actionBar     = document.getElementById('actionBar');
+const selProdName   = document.getElementById('selectedProductName');
+const xrReticle     = document.getElementById('xrReticle');
+const surfaceLabel  = document.getElementById('surfaceLabel');
+const glbLoader     = document.getElementById('glbLoader');
+const glbLoaderText = document.getElementById('glbLoaderText');
+const productScroll = document.getElementById('productScroll');
+const catTabs       = document.getElementById('catTabs');
+const scaleHint     = document.getElementById('scaleHint');
+const videoEl       = document.getElementById('videoEl');
 
 function setStatus(msg, cls='') {
   statusText.textContent = msg;
@@ -366,25 +298,81 @@ function setStatus(msg, cls='') {
   statusToast.style.display = 'flex';
 }
 
-/* ═══════════════════════════════════════════
-   THREE.JS SETUP
-═══════════════════════════════════════════ */
+/* ═══════════════════════════════════════
+   SURFACE UI
+═══════════════════════════════════════ */
+function getSurfaceTypeFromPose(pose) {
+  // column-major matrix : index 5 = Y component of local Y axis (normal)
+  const m = pose.transform.matrix;
+  const normalY = m[5];
+  if (Math.abs(normalY) > 0.7) return normalY > 0 ? 'floor' : 'ceiling';
+  return 'wall';
+}
+
+function updateSurfaceUI(type) {
+  // Bascule les SVG reticules
+  document.getElementById('reticleSvgFloor').style.display   = type === 'floor'   ? '' : 'none';
+  document.getElementById('reticleSvgWall').style.display    = type === 'wall'    ? '' : 'none';
+  document.getElementById('reticleSvgCeiling').style.display = type === 'ceiling' ? '' : 'none';
+
+  // Label surface
+  const labels = { floor: 'Sol', wall: 'Mur', ceiling: 'Plafond' };
+  surfaceLabel.textContent = labels[type] || 'Sol';
+  surfaceLabel.className = 'visible ' + type;
+
+  // 3D reticule mesh couleur
+  if (xrReticleMesh) {
+    const colors = { floor: 0x52B46B, wall: 0x6fa3d8, ceiling: 0xF59064 };
+    xrReticleMesh.material.color.set(colors[type] || 0x52B46B);
+  }
+
+  if (S.pendingPlace) {
+    const hints = {
+      floor:   'Pointez le sol pour placer',
+      wall:    'Pointez le mur pour placer',
+      ceiling: 'Pointez le plafond pour placer',
+    };
+    setStatus(hints[type] || hints.floor, 'scanning');
+  }
+}
+
+function visualizePlane(plane, pose) {
+  let planeMesh = S.detectedPlanes.get(plane);
+  if (!planeMesh) {
+    const isWall = plane.orientation === 'vertical';
+    // Sol/plafond : vert/orange — Mur : bleu
+    const color = isWall ? 0x6fa3d8 : (plane.orientation === 'horizontal' ? 0x52B46B : 0xF59064);
+    const geo = new THREE.PlaneGeometry(1, 1);
+    const mat = new THREE.MeshBasicMaterial({
+      color, transparent: true, opacity: 0.10,
+      side: THREE.DoubleSide, depthWrite: false,
+    });
+    planeMesh = new THREE.Mesh(geo, mat);
+    scene.add(planeMesh);
+    S.detectedPlanes.set(plane, planeMesh);
+  }
+  const m4 = new THREE.Matrix4().fromArray(pose.transform.matrix);
+  planeMesh.matrix.copy(m4);
+  planeMesh.matrixAutoUpdate = false;
+  if (plane.polygon && plane.polygon.length > 2) {
+    let maxX = 0, maxZ = 0;
+    plane.polygon.forEach(p => { maxX = Math.max(maxX, Math.abs(p.x)); maxZ = Math.max(maxZ, Math.abs(p.z)); });
+    planeMesh.scale.set(maxX * 2 || 1, maxZ * 2 || 1, 1);
+  }
+}
+
+/* ═══════════════════════════════════════
+   THREE.JS INIT
+═══════════════════════════════════════ */
 let scene, camera3, renderer3, loader;
 let xrReferenceSpace = null;
 let xrReticleMesh = null;
-
-
 
 function initThreeJS() {
   scene = new THREE.Scene();
   camera3 = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 100);
 
-  renderer3 = new THREE.WebGLRenderer({
-    canvas: threeCanvas,
-    alpha: true,
-    antialias: true,
-    logarithmicDepthBuffer: true,
-  });
+  renderer3 = new THREE.WebGLRenderer({ canvas: threeCanvas, alpha: true, antialias: true, logarithmicDepthBuffer: true });
   renderer3.setSize(window.innerWidth, window.innerHeight);
   renderer3.setPixelRatio(Math.min(devicePixelRatio, 2));
   renderer3.outputEncoding = THREE.sRGBEncoding;
@@ -393,26 +381,23 @@ function initThreeJS() {
   renderer3.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer3.xr.enabled = true;
 
-  // Après la création du renderer3, ajoute ces lignes :
-const pmremGenerator = new THREE.PMREMGenerator(renderer3);
-pmremGenerator.compileEquirectangularShader();
-const envTexture = pmremGenerator.fromScene(new THREE.RoomEnvironment()).texture;
-scene.environment = envTexture; // ← c'est ça qui fait marcher les matériaux PBR
-pmremGenerator.dispose();
+  // PMREMGenerator — requis pour MeshStandardMaterial (PBR)
+  const pmrem = new THREE.PMREMGenerator(renderer3);
+  pmrem.compileEquirectangularShader();
+  scene.environment = pmrem.fromScene(new THREE.RoomEnvironment()).texture;
+  pmrem.dispose();
 
-  const ambient = new THREE.AmbientLight(0xffffff, 1.4);
-  scene.add(ambient);
-  const dirLight = new THREE.DirectionalLight(0xffffff, 1.6);
-  dirLight.position.set(3, 8, 5);
-  dirLight.castShadow = true;
-  scene.add(dirLight);
-  const fillLight = new THREE.DirectionalLight(0xffffff, 0.5);
-  fillLight.position.set(-4, 2, -4);
-  scene.add(fillLight);
+  // Lumières (une seule fois)
+  scene.add(new THREE.AmbientLight(0xffffff, 1.2));
+  const dir = new THREE.DirectionalLight(0xffffff, 1.4);
+  dir.position.set(3, 8, 5); dir.castShadow = true; scene.add(dir);
+  const fill = new THREE.DirectionalLight(0xffffff, 0.4);
+  fill.position.set(-4, 2, -4); scene.add(fill);
 
-  const reticleGeometry = new THREE.RingGeometry(0.12, 0.15, 32).rotateX(-Math.PI / 2);
-  const reticleMaterial = new THREE.MeshBasicMaterial({ color: 0xF59064, side: THREE.DoubleSide });
-  xrReticleMesh = new THREE.Mesh(reticleGeometry, reticleMaterial);
+  // Reticule 3D (anneau au sol)
+  const reticleGeo = new THREE.RingGeometry(0.12, 0.15, 32).rotateX(-Math.PI / 2);
+  const reticleMat = new THREE.MeshBasicMaterial({ color: 0x52B46B, side: THREE.DoubleSide });
+  xrReticleMesh = new THREE.Mesh(reticleGeo, reticleMat);
   xrReticleMesh.visible = false;
   xrReticleMesh.matrixAutoUpdate = false;
   scene.add(xrReticleMesh);
@@ -426,14 +411,12 @@ pmremGenerator.dispose();
   });
 }
 
-/* ═══════════════════════════════════════════
+/* ═══════════════════════════════════════
    WEBXR SESSION
-═══════════════════════════════════════════ */
+═══════════════════════════════════════ */
 async function checkXRSupport() {
   if (!navigator.xr) return false;
-  try {
-    return await navigator.xr.isSessionSupported('immersive-ar');
-  } catch { return false; }
+  try { return await navigator.xr.isSessionSupported('immersive-ar'); } catch { return false; }
 }
 
 async function startXRSession() {
@@ -443,20 +426,19 @@ async function startXRSession() {
       optionalFeatures: ['dom-overlay', 'light-estimation', 'plane-detection'],
       domOverlay: { root: document.body },
     });
-
     S.xrSession = session;
     S.xrMode = true;
-    
 
     renderer3.xr.setReferenceSpaceType('local');
     await renderer3.xr.setSession(session);
     xrReferenceSpace = await session.requestReferenceSpace('local');
 
-const viewerSpace = await session.requestReferenceSpace('viewer');
-S.hitTestSource = await session.requestHitTestSource({
-  space: viewerSpace,
-  entityTypes: ['plane', 'point', 'mesh'], // ← détecte murs + plafond + sol
-});
+    const viewerSpace = await session.requestReferenceSpace('viewer');
+    // entityTypes permet le hit-test sur murs et plafond en plus du sol
+    S.hitTestSource = await session.requestHitTestSource({
+      space: viewerSpace,
+      entityTypes: ['plane', 'point', 'mesh'],
+    });
     S.hitTestSourceInitialized = true;
 
     session.addEventListener('end', onXRSessionEnd);
@@ -467,7 +449,7 @@ S.hitTestSource = await session.requestHitTestSource({
     sheet.style.display = 'flex';
     statusToast.style.display = 'flex';
     xrReticle.classList.add('visible');
-    setStatus('Pointez le sol pour placer', 'scanning');
+    setStatus('Pointez une surface pour placer', 'scanning');
     postToFlutter({ type: 'xr_started' });
 
     setTimeout(() => {
@@ -483,38 +465,37 @@ S.hitTestSource = await session.requestHitTestSource({
 }
 
 function onXRSessionEnd() {
-  S.xrMode = false;
-  S.xrSession = null;
-  S.hitTestSourceInitialized = false;
-  S.hitTestSource = null;
+  S.xrMode = false; S.xrSession = null;
+  S.hitTestSourceInitialized = false; S.hitTestSource = null;
   renderer3.setAnimationLoop(null);
   xrReticle.classList.remove('visible');
+  surfaceLabel.className = '';
   xrReticleMesh.visible = false;
   setStatus('Session AR terminée', 'ok');
 }
 
-/* ═══════════════════════════════════════════
+/* ═══════════════════════════════════════
    XR RENDER LOOP
-═══════════════════════════════════════════ */
+═══════════════════════════════════════ */
 function xrRenderLoop(timestamp, frame) {
   if (!frame) return;
 
-  // ── Hit-test (reticule) ──
+  // ── Hit-test ──
   if (S.hitTestSourceInitialized && S.hitTestSource) {
-    const hitTestResults = frame.getHitTestResults(S.hitTestSource);
-    if (hitTestResults.length > 0) {
-      const hit = hitTestResults[0];
-      const pose = hit.getPose(xrReferenceSpace);
+    const results = frame.getHitTestResults(S.hitTestSource);
+    if (results.length > 0) {
+      const pose = results[0].getPose(xrReferenceSpace);
       if (pose) {
         xrReticleMesh.visible = true;
         xrReticle.classList.add('visible');
         xrReticleMesh.matrix.fromArray(pose.transform.matrix);
         S.currentHitMatrix = pose.transform.matrix;
         S.reticleVisible = true;
-
-        // Détermine le type de surface via la normale du hit
-        S.currentSurfaceType = getSurfaceTypeFromPose(pose);
-        updateSurfaceUI(S.currentSurfaceType);
+        const surfType = getSurfaceTypeFromPose(pose);
+        if (surfType !== S.currentSurfaceType) {
+          S.currentSurfaceType = surfType;
+          updateSurfaceUI(surfType);
+        }
       }
     } else {
       xrReticle.classList.remove('visible');
@@ -522,41 +503,31 @@ function xrRenderLoop(timestamp, frame) {
     }
   }
 
-  // ── Plane detection (visualisation optionnelle) ──
+  // ── Plane detection ──
   if (frame.detectedPlanes) {
     frame.detectedPlanes.forEach(plane => {
       const pose = frame.getPose(plane.planeSpace, xrReferenceSpace);
-      if (!pose) return;
-      visualizePlane(plane, pose);
+      if (pose) visualizePlane(plane, pose);
     });
-    // Supprime les plans qui ont disparu
     S.detectedPlanes.forEach((mesh, plane) => {
-      if (!frame.detectedPlanes.has(plane)) {
-        scene.remove(mesh);
-        S.detectedPlanes.delete(plane);
-      }
+      if (!frame.detectedPlanes.has(plane)) { scene.remove(mesh); S.detectedPlanes.delete(plane); }
     });
   }
 
   renderer3.render(scene, camera3);
 }
-/* ═══════════════════════════════════════════
+
+/* ═══════════════════════════════════════
    FALLBACK CAMERA MODE
-═══════════════════════════════════════════ */
+═══════════════════════════════════════ */
 async function startFallbackMode() {
   S.fallbackMode = true;
   try {
     const stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
-      audio: false,
+      video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false,
     });
-    videoEl.srcObject = stream;
-    videoEl.style.display = 'block';
-    await videoEl.play();
-  } catch (e) {
-    setStatus('Caméra refusée', 'error');
-    return;
-  }
+    videoEl.srcObject = stream; videoEl.style.display = 'block'; await videoEl.play();
+  } catch (e) { setStatus('Caméra refusée', 'error'); return; }
 
   renderer3.setAnimationLoop(() => renderer3.render(scene, camera3));
 
@@ -564,44 +535,38 @@ async function startFallbackMode() {
     new THREE.PlaneGeometry(20, 20),
     new THREE.MeshBasicMaterial({ visible: false, side: THREE.DoubleSide })
   );
-  fl.rotation.x = -Math.PI / 2;
-  fl.name = 'floor';
-  scene.add(fl);
-
-  camera3.position.set(0, 1.2, 0);
-  camera3.lookAt(0, 0, -1.5);
+  fl.rotation.x = -Math.PI / 2; fl.name = 'floor'; scene.add(fl);
+  camera3.position.set(0, 1.2, 0); camera3.lookAt(0, 0, -1.5);
 
   startScreen.classList.add('hidden');
-  topBar.style.display = 'flex';
-  sheet.style.display = 'flex';
+  topBar.style.display = 'flex'; sheet.style.display = 'flex';
   statusToast.style.display = 'flex';
   xrReticle.classList.add('visible');
-  S.reticleVisible = true;
-  S.currentHitMatrix = null;
+  surfaceLabel.className = 'visible floor';
+  surfaceLabel.textContent = 'Sol';
+  S.reticleVisible = true; S.currentHitMatrix = null;
   setStatus('Mode caméra (WebXR non dispo)', 'ok');
 
   threeCanvas.addEventListener('click', (e) => {
     if (!S.pendingPlace || !S.selectedProductId) return;
     const pos = screenToFloor(e.clientX, e.clientY);
-    if (pos) placeProductAtPosition(pos);
+    if (pos) placeProductAtPosition(pos, null);
   });
 }
 
-/* ═══════════════════════════════════════════
-   TOUCH / TAP HANDLING
-═══════════════════════════════════════════ */
+/* ═══════════════════════════════════════
+   TOUCH / TAP
+═══════════════════════════════════════ */
 function setupXRSelect() {
   if (!S.xrSession) return;
   S.xrSession.addEventListener('select', () => {
     if (S.pendingPlace && S.selectedProductId && S.reticleVisible) {
       const mat = xrReticleMesh.matrix;
-      const pos = new THREE.Vector3();
-      const quat = new THREE.Quaternion();
-      const scale = new THREE.Vector3();
-      mat.decompose(pos, quat, scale);
+      const pos = new THREE.Vector3(), quat = new THREE.Quaternion(), sc = new THREE.Vector3();
+      mat.decompose(pos, quat, sc);
       placeProductAtPosition(pos, quat);
       S.pendingPlace = false;
-      setStatus('Placé ! Tapez pour en ajouter un autre', 'ok');
+      setStatus('Placé !', 'ok');
     } else {
       const objHit = hitTestObjects();
       if (objHit) selectObject(objHit.id);
@@ -631,51 +596,26 @@ function hitTestObjects() {
   return S.placedObjects.find(o => o.id === h.userData.placeId) || null;
 }
 
-/* ═══════════════════════════════════════════
-   ✅ SMART SCALE HELPER
-   Normalises any GLB to a real-world target size.
-   Uses the largest dimension (X, Y, or Z) as reference
-   so flat tiles and tall lamps both scale correctly.
-═══════════════════════════════════════════ */
+/* ═══════════════════════════════════════
+   SMART SCALE
+═══════════════════════════════════════ */
 function computeModelScale(model, category) {
-  // Raw bounding box before any scale change
   const bb = new THREE.Box3().setFromObject(model);
   const size = bb.getSize(new THREE.Vector3());
-
   const maxDim = Math.max(size.x, size.y, size.z);
-  console.log('📏 RAW SIZE:', size, '| maxDim:', maxDim);
-
-  if (maxDim <= 0) {
-    console.warn('⚠️ maxDim = 0, scale forcé à 1');
-    return 1.0;
-  }
-
-  // Detect flat objects (tiles, rugs, floors):
-  // flat if the shortest axis is < 10% of the longest axis
+  if (maxDim <= 0) return 1.0;
   const minDim = Math.min(size.x, size.y, size.z);
   const isFlatObject = minDim / maxDim < 0.10;
-
-  // Target real-world size in METRES:
-  // • flat tile/rug  → 1 m  (a standard floor tile)
-  // • ceiling lamp   → 0.4 m diameter
-  // • furniture      → 1 m  (generic — user can tweak with slider)
-  let TARGET_SIZE = 1.0;
-  if (isFlatObject) {
-    TARGET_SIZE = 1.0; // 1 m tile
-  } else if (category && /clairage|lampe|lamp|light|ceiling/i.test(category)) {
-    TARGET_SIZE = 0.4; // ceiling fixtures are smaller
-  } else {
-    TARGET_SIZE = 1.0;
-  }
-
-  const modelScale = TARGET_SIZE / maxDim;
-  console.log('📐 isFlatObject:', isFlatObject, '| TARGET_SIZE:', TARGET_SIZE, '| modelScale:', modelScale);
-  return modelScale;
+  let TARGET = 1.0;
+  if (isFlatObject) TARGET = 1.0;
+  else if (category && /clairage|lampe|lamp|light|ceiling|plafond|lustre|suspension/i.test(category)) TARGET = 0.4;
+  else if (category && /tableau|cadre|miroir|applique|papier.peint|wallpaper/i.test(category)) TARGET = 0.6;
+  return TARGET / maxDim;
 }
 
-/* ═══════════════════════════════════════════
-   ✅ PLACE PRODUCT — FIXED SCALE
-═══════════════════════════════════════════ */
+/* ═══════════════════════════════════════
+   PLACE PRODUCT  ← BUG CORRIGÉ ICI
+═══════════════════════════════════════ */
 function placeProductAtPosition(pos, quat) {
   const product = S.catalog.find(p => p.id === S.selectedProductId);
   if (!product) return;
@@ -688,15 +628,15 @@ function placeProductAtPosition(pos, quat) {
   const id = ++S.meshIdCounter;
   group.userData.placeId = id;
 
+  // Snapshot de la surface au moment du placement
+  const surfaceAtPlacement = S.currentSurfaceType;
+
   const entry = {
-    id,
-    group,
-    productId: product.id,
-    name: product.name,
+    id, group,
+    productId: product.id, name: product.name,
     category: product.category || '',
-    rotY: 0,
-    scaleVal: S.scaleMultiplier,
-    baseScale: 1,
+    rotY: 0, scaleVal: S.scaleMultiplier, baseScale: 1,
+    surfaceType: surfaceAtPlacement,
   };
   S.placedObjects.push(entry);
   updatePlacedBadge();
@@ -704,133 +644,112 @@ function placeProductAtPosition(pos, quat) {
   if (product.modelUrl && product.modelUrl.length > 4) {
     glbLoader.classList.add('visible');
     glbLoaderText.textContent = 'Chargement modèle 3D…';
-    console.log('🚀 TRY LOAD:', product.modelUrl);
 
     loader.load(
       product.modelUrl,
 
-      // ✅ SUCCESS
       (gltf) => {
-        console.log('✅ GLB LOADED');
         glbLoader.classList.remove('visible');
-
         const model = gltf.scene;
-        if (!model) { console.error('❌ model is null'); return; }
+        if (!model) return;
 
-        // Reset any transforms baked into the root
+        // Reset transforms
         model.position.set(0, 0, 0);
         model.rotation.set(0, 0, 0);
         model.scale.set(1, 1, 1);
         model.updateMatrixWorld(true);
 
-        // ── STEP 1 : compute smart scale from raw size ──
+        // STEP 1 : scale intelligente
         const modelScale = computeModelScale(model, entry.category);
         entry.baseScale = modelScale;
 
-        // ── STEP 2 : apply scale (base × user multiplier) ──
+        // STEP 2 : scale finale
         const finalScale = modelScale * S.scaleMultiplier;
         model.scale.setScalar(finalScale);
         model.updateMatrixWorld(true);
-        // Ajuste la position selon le type de surface
-if (S.currentSurfaceType === 'wall') {
-  // Sur un mur : le modèle "sort" du mur (offset en Z local)
-  model.position.z += 0.02;
-  model.position.y -= bb2.min.y; // centre en hauteur
-} else if (S.currentSurfaceType === 'ceiling') {
-  // Au plafond : flip + accroche vers le bas
-  model.rotation.x = Math.PI;
-  model.position.y += bb2.max.y; // au lieu de min.y
-} else {
-  // Sol : comportement existant
-  model.position.y -= bb2.min.y;
-}
 
-        // ── STEP 3 : centre X/Z and sit on ground (Y) ──
-        const bb2 = new THREE.Box3().setFromObject(model);
-        const center = bb2.getCenter(new THREE.Vector3());
+        // STEP 3 : bounding box APRÈS scale  ← DOIT ÊTRE AVANT l'ajustement surface
+        const bb = new THREE.Box3().setFromObject(model);
+        const center = bb.getCenter(new THREE.Vector3());
 
+        // Centre X/Z
         model.position.x -= center.x;
         model.position.z -= center.z;
-        // Lift so the bottom face sits exactly at group Y (= floor hit point)
-        model.position.y -= bb2.min.y;
 
-model.position.y += 0.01; // 🔥 AJOUTE ÇA
+        // STEP 4 : ajustement selon la surface (utilise bb calculé juste au-dessus)
+        if (surfaceAtPlacement === 'wall') {
+          // Mur : centre verticalement, sort légèrement du mur
+          model.position.y -= center.y;
+          model.position.z += 0.02;
+        } else if (surfaceAtPlacement === 'ceiling') {
+          // Plafond : retourne le modèle, accroche par le haut
+          model.rotation.x = Math.PI;
+          model.updateMatrixWorld(true);
+          const bbFlipped = new THREE.Box3().setFromObject(model);
+          model.position.y -= bbFlipped.min.y;
+        } else {
+          // Sol : pose le bas du modèle exactement sur le sol
+          model.position.y -= bb.min.y;
+          model.position.y += 0.002; // micro-offset anti z-fighting
+        }
 
-        console.log(
-          '📐 finalScale:', finalScale,
-          '| lift:', -bb2.min.y,
-          '| scaledSize:', bb2.getSize(new THREE.Vector3())
-        );
+        // STEP 5 : matériaux PBR + textures
+        model.traverse(c => {
+          if (!c.isMesh) return;
+          const mats = Array.isArray(c.material) ? c.material : [c.material];
+          mats.forEach(mat => {
+            mat.side = THREE.DoubleSide;
+            ['map','normalMap','roughnessMap','metalnessMap','emissiveMap','aoMap'].forEach(k => {
+              if (mat[k]) mat[k].encoding = THREE.sRGBEncoding;
+            });
+            mat.needsUpdate = true;
+          });
+          c.castShadow = true;
+          c.receiveShadow = true;
+        });
 
-        // ── STEP 4 : materials ──
-       // Fix matériaux
-// Par :
-model.traverse(c => {
-  if (c.isMesh) {
-    c.material.side = THREE.DoubleSide;
-    // Corrige l'encoding de chaque texture du matériau
-    const mats = Array.isArray(c.material) ? c.material : [c.material];
-    mats.forEach(mat => {
-      ['map','normalMap','roughnessMap','metalnessMap','emissiveMap','aoMap'].forEach(key => {
-        if (mat[key]) mat[key].encoding = THREE.sRGBEncoding;
-      });
-      mat.needsUpdate = true;
-    });
-    c.castShadow = true;
-    c.receiveShadow = true;
-  }
-});
         group.add(model);
         entry.model = model;
-
-        console.log('✅ MODEL ADDED TO SCENE');
         selectObject(id);
       },
 
-      // ⏳ PROGRESS
       (progress) => {
-        if (progress.total > 0) {
-          console.log(`⏳ Loading: ${(progress.loaded / progress.total * 100).toFixed(1)}%`);
-        }
+        if (progress.total > 0)
+          glbLoaderText.textContent = 'Chargement ' + Math.round(progress.loaded / progress.total * 100) + '%…';
       },
 
-      // ❌ ERROR
       (err) => {
         glbLoader.classList.remove('visible');
-        console.error('❌ GLB ERROR:', err?.message || err);
-
-        // Fallback cube
+        console.error('GLB ERROR:', err?.message || err);
         const fb = new THREE.Mesh(
           new THREE.BoxGeometry(0.5, 0.5, 0.5),
           new THREE.MeshStandardMaterial({ color: 0xccaa88, transparent: true, opacity: S.opacity })
         );
         fb.position.y = 0.25;
         group.add(fb);
-        entry.model = fb;
-        entry.baseScale = 1;
+        entry.model = fb; entry.baseScale = 1;
         selectObject(id);
       }
     );
 
   } else {
-    // No model URL → cube placeholder
+    // Placeholder cube
     const placeholder = new THREE.Mesh(
       new THREE.BoxGeometry(0.5, 0.5, 0.5),
       new THREE.MeshStandardMaterial({ color: 0xccaa88, transparent: true, opacity: S.opacity })
     );
     placeholder.position.y = 0.25;
     group.add(placeholder);
-    entry.model = placeholder;
-    entry.baseScale = 1;
+    entry.model = placeholder; entry.baseScale = 1;
     selectObject(id);
   }
 
   postToFlutter({ type: 'placed', count: S.placedObjects.length });
 }
 
-/* ═══════════════════════════════════════════
+/* ═══════════════════════════════════════
    OBJECT MANAGEMENT
-═══════════════════════════════════════════ */
+═══════════════════════════════════════ */
 function selectObject(id) {
   S.selectedObjectId = id;
   const obj = S.placedObjects.find(o => o.id === id);
@@ -838,34 +757,24 @@ function selectObject(id) {
   selProdName.textContent = obj.name || 'Objet';
   actionBar.classList.add('visible');
 }
-function deselectObject() {
-  S.selectedObjectId = null;
-  actionBar.classList.remove('visible');
-}
+function deselectObject() { S.selectedObjectId = null; actionBar.classList.remove('visible'); }
 function rotateSelected(deg) {
   const obj = S.placedObjects.find(o => o.id === S.selectedObjectId);
   if (!obj) return;
   obj.rotY += deg * Math.PI / 180;
   obj.group.rotation.y = obj.rotY;
 }
-
-// ✅ Scale uses baseScale so user multiplier stacks correctly
 function scaleObject(obj, val) {
   const c = Math.max(0.05, Math.min(8, val));
   obj.scaleVal = c;
-  if (obj.model) {
-    const base = obj.baseScale || 1;
-    obj.model.scale.setScalar(base * c);
-  }
+  if (obj.model) obj.model.scale.setScalar((obj.baseScale || 1) * c);
 }
-
 function deleteSelected() {
   const obj = S.placedObjects.find(o => o.id === S.selectedObjectId);
   if (!obj) return;
   scene.remove(obj.group);
   S.placedObjects = S.placedObjects.filter(o => o.id !== S.selectedObjectId);
-  deselectObject();
-  updatePlacedBadge();
+  deselectObject(); updatePlacedBadge();
   postToFlutter({ type: 'removed', count: S.placedObjects.length });
 }
 function updatePlacedBadge() {
@@ -876,48 +785,35 @@ function updatePlacedBadge() {
 function updateAllOpacity() {
   S.placedObjects.forEach(obj => {
     obj.group.traverse(c => {
-      if (c.isMesh) {
-        const mats = Array.isArray(c.material) ? c.material : [c.material];
-        mats.forEach(m => {
-          m.transparent = S.opacity < 1.0;
-          m.opacity = S.opacity;
-          m.needsUpdate = true;
-        });
-      }
+      if (!c.isMesh) return;
+      const mats = Array.isArray(c.material) ? c.material : [c.material];
+      mats.forEach(m => { m.transparent = S.opacity < 1.0; m.opacity = S.opacity; m.needsUpdate = true; });
     });
   });
 }
 
-/* ═══════════════════════════════════════════
-   TOUCH PINCH (scale)
-═══════════════════════════════════════════ */
+/* ═══════════════════════════════════════
+   TOUCH PINCH
+═══════════════════════════════════════ */
 document.addEventListener('touchstart', e => {
   if (e.touches.length === 2) {
-    S.touchStartDist = Math.hypot(
-      e.touches[0].clientX - e.touches[1].clientX,
-      e.touches[0].clientY - e.touches[1].clientY
-    );
+    S.touchStartDist = Math.hypot(e.touches[0].clientX-e.touches[1].clientX, e.touches[0].clientY-e.touches[1].clientY);
     const obj = S.placedObjects.find(o => o.id === S.selectedObjectId);
     S.touchStartScale = obj ? obj.scaleVal : 1;
   }
 }, { passive: true });
-
 document.addEventListener('touchmove', e => {
   if (e.touches.length === 2 && S.touchStartDist) {
-    const d = Math.hypot(
-      e.touches[0].clientX - e.touches[1].clientX,
-      e.touches[0].clientY - e.touches[1].clientY
-    );
+    const d = Math.hypot(e.touches[0].clientX-e.touches[1].clientX, e.touches[0].clientY-e.touches[1].clientY);
     const obj = S.placedObjects.find(o => o.id === S.selectedObjectId);
     if (obj) scaleObject(obj, S.touchStartScale * (d / S.touchStartDist));
   }
 }, { passive: true });
-
 document.addEventListener('touchend', () => { S.touchStartDist = null; });
 
-/* ═══════════════════════════════════════════
-   ACTION BAR BUTTONS
-═══════════════════════════════════════════ */
+/* ═══════════════════════════════════════
+   ACTION BAR
+═══════════════════════════════════════ */
 document.getElementById('aBtnRotL').addEventListener('click', () => rotateSelected(-20));
 document.getElementById('aBtnRotR').addEventListener('click', () => rotateSelected(20));
 document.getElementById('aBtnScaleUp').addEventListener('click', () => {
@@ -931,44 +827,39 @@ document.getElementById('aBtnScaleDown').addEventListener('click', () => {
 document.getElementById('aBtnDelete').addEventListener('click', deleteSelected);
 document.getElementById('aBtnConfirm').addEventListener('click', deselectObject);
 
-/* ═══════════════════════════════════════════
+/* ═══════════════════════════════════════
    BOTTOM SHEET
-═══════════════════════════════════════════ */
+═══════════════════════════════════════ */
 const PEEK = 92, MID = 360, FULL = Math.round(window.innerHeight * 0.88);
 let shDragStartY = null, shDragStartH = 0;
-
-function setSheetH(h, anim = true) {
+function setSheetH(h, anim=true) {
   sheet.style.transition = anim ? 'height .35s cubic-bezier(.32,.72,0,1)' : 'none';
   sheet.style.height = h + 'px';
   sheet.classList.toggle('collapsed', h <= PEEK + 10);
 }
 function snapSheet(h) {
-  const m1 = (PEEK + MID) / 2, m2 = (MID + FULL) / 2;
+  const m1 = (PEEK+MID)/2, m2 = (MID+FULL)/2;
   setSheetH(h < m1 ? PEEK : h < m2 ? MID : FULL);
 }
 const handleEl = document.getElementById('sheetHandle');
-handleEl.addEventListener('mousedown', e => { shDragStartY = e.clientY; shDragStartH = sheet.getBoundingClientRect().height; sheet.style.transition = 'none'; });
-handleEl.addEventListener('touchstart', e => { shDragStartY = e.touches[0].clientY; shDragStartH = sheet.getBoundingClientRect().height; sheet.style.transition = 'none'; }, { passive: true });
-window.addEventListener('mousemove', e => { if (shDragStartY === null) return; const h = Math.max(PEEK, Math.min(FULL, shDragStartH + (shDragStartY - e.clientY))); sheet.style.height = h + 'px'; sheet.classList.toggle('collapsed', h <= PEEK + 10); });
-window.addEventListener('touchmove', e => { if (shDragStartY === null) return; const h = Math.max(PEEK, Math.min(FULL, shDragStartH + (shDragStartY - e.touches[0].clientY))); sheet.style.height = h + 'px'; sheet.classList.toggle('collapsed', h <= PEEK + 10); }, { passive: true });
-function onSheetDragEnd() { if (shDragStartY === null) return; const h = sheet.getBoundingClientRect().height; shDragStartY = null; snapSheet(h); }
+handleEl.addEventListener('mousedown', e => { shDragStartY=e.clientY; shDragStartH=sheet.getBoundingClientRect().height; sheet.style.transition='none'; });
+handleEl.addEventListener('touchstart', e => { shDragStartY=e.touches[0].clientY; shDragStartH=sheet.getBoundingClientRect().height; sheet.style.transition='none'; }, {passive:true});
+window.addEventListener('mousemove', e => { if(shDragStartY===null)return; const h=Math.max(PEEK,Math.min(FULL,shDragStartH+(shDragStartY-e.clientY))); sheet.style.height=h+'px'; sheet.classList.toggle('collapsed',h<=PEEK+10); });
+window.addEventListener('touchmove', e => { if(shDragStartY===null)return; const h=Math.max(PEEK,Math.min(FULL,shDragStartH+(shDragStartY-e.touches[0].clientY))); sheet.style.height=h+'px'; sheet.classList.toggle('collapsed',h<=PEEK+10); }, {passive:true});
+function onSheetDragEnd() { if(shDragStartY===null)return; const h=sheet.getBoundingClientRect().height; shDragStartY=null; snapSheet(h); }
 window.addEventListener('mouseup', onSheetDragEnd);
 window.addEventListener('touchend', onSheetDragEnd);
-handleEl.addEventListener('click', () => { const h = sheet.getBoundingClientRect().height; setSheetH(h <= PEEK + 10 ? MID : h >= FULL - 20 ? PEEK : FULL); });
+handleEl.addEventListener('click', () => { const h=sheet.getBoundingClientRect().height; setSheetH(h<=PEEK+10?MID:h>=FULL-20?PEEK:FULL); });
 
-/* ═══════════════════════════════════════════
-   PLACE / RESET / CAPTURE
-═══════════════════════════════════════════ */
+/* ═══════════════════════════════════════
+   PLACE / RESET / CAPTURE BUTTONS
+═══════════════════════════════════════ */
 document.getElementById('placeBtn').addEventListener('click', () => {
-  if (!S.selectedProductId && S.catalog.length > 0) {
-    selectProductById(S.catalog[0].id);
-    return;
-  }
+  if (!S.selectedProductId && S.catalog.length > 0) { selectProductById(S.catalog[0].id); return; }
   if (!S.selectedProductId) return;
-
   if (S.xrMode) {
     S.pendingPlace = true;
-    setStatus('Tapez sur le sol pour placer', 'scanning');
+    updateSurfaceUI(S.currentSurfaceType);
     setSheetH(PEEK);
   } else {
     placeProductAtPosition(new THREE.Vector3(0, 0, -1.5), null);
@@ -978,21 +869,17 @@ document.getElementById('placeBtn').addEventListener('click', () => {
 
 document.getElementById('resetBtn').addEventListener('click', () => {
   S.placedObjects.forEach(o => scene.remove(o.group));
-  S.placedObjects = [];
-  deselectObject();
-  updatePlacedBadge();
-  S.selectedProductId = null;
-  S.pendingPlace = false;
-  updateActiveCards();
-  setStatus('Réinitialisé', 'ok');
+  S.placedObjects = []; deselectObject(); updatePlacedBadge();
+  S.selectedProductId = null; S.pendingPlace = false;
+  updateActiveCards(); setStatus('Réinitialisé', 'ok');
   postToFlutter({ type: 'removed', count: 0 });
 });
 
 document.getElementById('captureBtn').addEventListener('click', doCapture);
 
-/* ═══════════════════════════════════════════
+/* ═══════════════════════════════════════
    SLIDERS
-═══════════════════════════════════════════ */
+═══════════════════════════════════════ */
 document.getElementById('scaleSlider').addEventListener('input', e => {
   S.scaleMultiplier = parseInt(e.target.value) / 100;
   document.getElementById('scaleDisp').textContent = e.target.value;
@@ -1005,11 +892,10 @@ document.getElementById('opacSlider').addEventListener('input', e => {
   updateAllOpacity();
 });
 
-/* ═══════════════════════════════════════════
+/* ═══════════════════════════════════════
    CATALOG
-═══════════════════════════════════════════ */
-window.loadProductCatalog = function (products) {
-  console.log('[PlaceAR] Catalog:', products.length, 'products');
+═══════════════════════════════════════ */
+window.loadProductCatalog = function(products) {
   S.catalog = products;
   buildCategoryTabs(products);
   renderProductCards(products);
@@ -1017,21 +903,19 @@ window.loadProductCatalog = function (products) {
   setSheetH(MID);
 };
 
-window.onerror = function (msg, url, line, col, error) {
-  console.error('💥 GLOBAL ERROR:', msg, url, line, col, error);
-};
+window.onerror = function(msg, url, line, col, error) { console.error('GLOBAL ERROR:', msg, url, line, col, error); };
 
 function buildCategoryTabs(products) {
   const cats = [...new Set(products.map(p => p.category).filter(Boolean))];
   catTabs.innerHTML = '';
   const all = document.createElement('div');
-  all.className = 'catTab active'; all.dataset.cat = 'all'; all.textContent = 'Tous';
+  all.className='catTab active'; all.dataset.cat='all'; all.textContent='Tous';
   all.addEventListener('click', () => switchCat('all', all));
   catTabs.appendChild(all);
   cats.forEach(cat => {
     const tab = document.createElement('div');
-    tab.className = 'catTab'; tab.dataset.cat = cat;
-    tab.textContent = cat.charAt(0).toUpperCase() + cat.slice(1);
+    tab.className='catTab'; tab.dataset.cat=cat;
+    tab.textContent = cat.charAt(0).toUpperCase()+cat.slice(1);
     tab.addEventListener('click', () => switchCat(cat, tab));
     catTabs.appendChild(tab);
   });
@@ -1040,28 +924,24 @@ function buildCategoryTabs(products) {
 function switchCat(cat, tabEl) {
   document.querySelectorAll('.catTab').forEach(t => t.classList.remove('active'));
   if (tabEl) tabEl.classList.add('active');
-  const filtered = cat === 'all' ? S.catalog : S.catalog.filter(p => p.category === cat);
-  renderProductCards(filtered);
+  renderProductCards(cat==='all' ? S.catalog : S.catalog.filter(p => p.category===cat));
 }
 
 function renderProductCards(products) {
   productScroll.innerHTML = '';
-  if (!products.length) {
-    productScroll.innerHTML = '<div style="padding:16px;color:var(--grey);font-size:11px">Aucun produit</div>';
-    return;
-  }
+  if (!products.length) { productScroll.innerHTML='<div style="padding:16px;color:var(--grey);font-size:11px">Aucun produit</div>'; return; }
   products.forEach(p => {
     const card = document.createElement('div');
-    card.className = 'prodCard' + (S.selectedProductId === p.id ? ' active' : '');
+    card.className = 'prodCard'+(S.selectedProductId===p.id?' active':'');
     card.dataset.id = p.id;
     const imgSrc = p.imageUrl || p.thumbnail || '';
     card.innerHTML =
-      '<img class="prodCard-img" src="' + escapeHtml(imgSrc) + '" onerror="this.style.background=\'#c8d0d8\'" loading="lazy">' +
-      '<div class="prodCard-body">' +
-        '<div class="prodCard-name">' + escapeHtml(p.name || 'Produit') + '</div>' +
-        '<div class="prodCard-sub">' + escapeHtml(p.category || '') + '</div>' +
-      '</div>' +
-      '<div class="prodCard-badge">' + escapeHtml(p.category || '') + '</div>';
+      '<img class="prodCard-img" src="'+escapeHtml(imgSrc)+'" onerror="this.style.background=\'#c8d0d8\'" loading="lazy">'+
+      '<div class="prodCard-body">'+
+        '<div class="prodCard-name">'+escapeHtml(p.name||'Produit')+'</div>'+
+        '<div class="prodCard-sub">'+escapeHtml(p.category||'')+'</div>'+
+      '</div>'+
+      '<div class="prodCard-badge">'+escapeHtml(p.category||'')+'</div>';
     card.addEventListener('click', () => selectProductById(p.id));
     productScroll.appendChild(card);
   });
@@ -1070,17 +950,14 @@ function renderProductCards(products) {
 function selectProductById(id) {
   S.selectedProductId = id;
   S.pendingPlace = true;
-  const p = S.catalog.find(p => p.id === id);
+  const p = S.catalog.find(p => p.id===id);
   if (p) {
-    // Détermine la surface cible selon la catégorie
-    const isWallProduct    = /tableau|cadre|miroir|applique|papier.peint|wallpaper/i.test(p.name + ' ' + p.category);
-    const isCeilingProduct = /plafond|ceiling|lustre|suspension|lampe.plafond/i.test(p.name + ' ' + p.category);
-
-    let hint = 'Pointez le sol';
-    if (isWallProduct)    hint = 'Pointez un mur';
-    if (isCeilingProduct) hint = 'Pointez le plafond';
-
-    setStatus(`${p.name} — ${hint} pour placer`, 'scanning');
+    const isWall    = /tableau|cadre|miroir|applique|papier.peint|wallpaper/i.test(p.name+' '+p.category);
+    const isCeiling = /plafond|ceiling|lustre|suspension|lampe.plafond/i.test(p.name+' '+p.category);
+    // Pré-sélectionne la surface suggérée
+    if (isWall)    S.currentSurfaceType = 'wall';
+    if (isCeiling) S.currentSurfaceType = 'ceiling';
+    updateSurfaceUI(S.currentSurfaceType);
     setSheetH(PEEK);
   }
   updateActiveCards();
@@ -1088,21 +965,18 @@ function selectProductById(id) {
 }
 
 function updateActiveCards() {
-  document.querySelectorAll('.prodCard').forEach(c => {
-    c.classList.toggle('active', c.dataset.id === S.selectedProductId);
-  });
+  document.querySelectorAll('.prodCard').forEach(c => c.classList.toggle('active', c.dataset.id===S.selectedProductId));
 }
 
-/* ═══════════════════════════════════════════
+/* ═══════════════════════════════════════
    CAPTURE
-═══════════════════════════════════════════ */
+═══════════════════════════════════════ */
 async function doCapture() {
   const showSaveToast = (icon, txt) => {
     document.getElementById('saveToastIcon').textContent = icon;
     document.getElementById('saveToastText').textContent = txt;
     const t = document.getElementById('saveToast');
-    t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 2200);
+    t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2200);
   };
   try {
     renderer3.render(scene, camera3);
@@ -1110,22 +984,20 @@ async function doCapture() {
       if (!blob) return;
       const file = new File([blob], 'placeAR.png', { type: 'image/png' });
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        try { await navigator.share({ files: [file], title: 'PlaceAR' }); showSaveToast('📸', 'Partagé !'); return; } catch {}
+        try { await navigator.share({ files: [file], title: 'PlaceAR' }); showSaveToast('📸','Partagé !'); return; } catch {}
       }
       const a = document.createElement('a');
-      a.download = 'placeAR.png';
-      a.href = URL.createObjectURL(blob);
-      a.click();
+      a.download='placeAR.png'; a.href=URL.createObjectURL(blob); a.click();
       setTimeout(() => URL.revokeObjectURL(a.href), 3000);
-      showSaveToast('💾', 'Image sauvegardée !');
+      showSaveToast('💾','Image sauvegardée !');
     }, 'image/png');
-  } catch (e) { showSaveToast('❌', 'Erreur capture'); }
+  } catch (e) { showSaveToast('❌','Erreur capture'); }
   postToFlutter({ type: 'capture' });
 }
 
-/* ═══════════════════════════════════════════
+/* ═══════════════════════════════════════
    FLUTTER BRIDGE
-═══════════════════════════════════════════ */
+═══════════════════════════════════════ */
 function postToFlutter(obj) {
   try {
     if (window.flutter_inappwebview) { window.flutter_inappwebview.callHandler('FlutterBridge', JSON.stringify(obj)); return; }
@@ -1134,74 +1006,63 @@ function postToFlutter(obj) {
   } catch (e) { console.log('[Bridge]', obj); }
 }
 
-window.receiveFromFlutter = function (jsonStr) {
+window.receiveFromFlutter = function(jsonStr) {
   try {
     const data = JSON.parse(jsonStr);
-    if (data.type === 'catalog' && data.products) window.loadProductCatalog(data.products);
-    if (data.type === 'clear') {
+    if (data.type==='catalog' && data.products) window.loadProductCatalog(data.products);
+    if (data.type==='clear') {
       S.placedObjects.forEach(o => scene && scene.remove(o.group));
-      S.placedObjects = [];
-      deselectObject();
-      updatePlacedBadge();
+      S.placedObjects=[]; deselectObject(); updatePlacedBadge();
     }
-  } catch (e) { console.error('receiveFromFlutter', e); }
+  } catch(e) { console.error('receiveFromFlutter', e); }
 };
 
-/* ═══════════════════════════════════════════
+/* ═══════════════════════════════════════
    URL PARAMS
-═══════════════════════════════════════════ */
+═══════════════════════════════════════ */
 function loadFromUrlParams() {
   const params = new URLSearchParams(window.location.search);
   const productsParam = params.get('products');
-  if (productsParam) {
-    try {
-      const products = JSON.parse(decodeURIComponent(productsParam));
-      const mapped = products.map(p => {
-        if (p.modelUrl && p.modelUrl.includes('127.0.0.1') && location.protocol === 'https:') {
-          console.warn('⚠️ Mixed content: modelUrl uses http://127.0.0.1 sur HTTPS → le GLB sera bloqué par le navigateur.');
-        }
-        return {
-          id: p.id || p._id,
-          name: p.name,
-          modelUrl: p.modelUrl || p.model3D || '',
-          imageUrl: p.imageUrl || p.image || p.thumbnail || '',
-          category: p.category || 'Furniture',
-        };
-      });
-      setTimeout(() => window.loadProductCatalog(mapped), 500);
-    } catch (e) { console.error('Failed to parse products from URL', e); }
-  }
+  if (!productsParam) return;
+  try {
+    const products = JSON.parse(decodeURIComponent(productsParam));
+    const mapped = products.map(p => ({
+      id: p.id||p._id, name: p.name,
+      modelUrl: p.modelUrl||p.model3D||'',
+      imageUrl: p.imageUrl||p.image||p.thumbnail||'',
+      category: p.category||'Furniture',
+    }));
+    setTimeout(() => window.loadProductCatalog(mapped), 500);
+  } catch(e) { console.error('URL params parse error', e); }
 }
 
-/* ═══════════════════════════════════════════
-   UTILS
-═══════════════════════════════════════════ */
 function escapeHtml(s) {
   if (!s) return '';
-  return s.toString().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  return s.toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-/* ═══════════════════════════════════════════
+/* ═══════════════════════════════════════
    MOCK CATALOG
-═══════════════════════════════════════════ */
+═══════════════════════════════════════ */
 const MOCK_CATALOG = [
-  { id: 'm1', name: 'Canapé Moderne', category: 'Salon', modelUrl: '', imageUrl: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=200' },
-  { id: 'm2', name: 'Table Basse', category: 'Salon', modelUrl: '', imageUrl: 'https://images.unsplash.com/photo-1533090161767-e6ffed986c88?w=200' },
-  { id: 'm3', name: 'Lampadaire', category: 'Éclairage', modelUrl: '', imageUrl: 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=200' },
+  { id:'m1', name:'Canapé Moderne',   category:'Salon',    modelUrl:'', imageUrl:'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=200' },
+  { id:'m2', name:'Table Basse',      category:'Salon',    modelUrl:'', imageUrl:'https://images.unsplash.com/photo-1533090161767-e6ffed986c88?w=200' },
+  { id:'m3', name:'Lustre Plafond',   category:'Plafond',  modelUrl:'', imageUrl:'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=200' },
+  { id:'m4', name:'Tableau Mural',    category:'Mur',      modelUrl:'', imageUrl:'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=200' },
+  { id:'m5', name:'Papier Peint',     category:'Mur',      modelUrl:'', imageUrl:'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=200' },
+  { id:'m6', name:'Applique Murale',  category:'Mur',      modelUrl:'', imageUrl:'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=200' },
 ];
 
-/* ═══════════════════════════════════════════
+/* ═══════════════════════════════════════
    INIT
-═══════════════════════════════════════════ */
+═══════════════════════════════════════ */
 initThreeJS();
 loadFromUrlParams();
 
 startArBtn.addEventListener('click', async () => {
   startArBtn.disabled = true;
   startArBtn.textContent = 'Vérification…';
-
   S.xrSupported = await checkXRSupport();
-
   if (S.xrSupported) {
     await startXRSession();
     setupXRSelect();
@@ -1212,12 +1073,8 @@ startArBtn.addEventListener('click', async () => {
     startArBtn.onclick = startFallbackMode;
     await startFallbackMode();
   }
-
   setTimeout(() => {
-    if (S.catalog.length === 0) {
-      console.log('[PlaceAR] Using mock catalog');
-      window.loadProductCatalog(MOCK_CATALOG);
-    }
+    if (S.catalog.length === 0) window.loadProductCatalog(MOCK_CATALOG);
   }, 2000);
 });
 </script>
