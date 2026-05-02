@@ -681,7 +681,9 @@ loader.load(
     console.log("📏 SIZE:", size);
 
     if (maxDim > 0) {
-      model.scale.setScalar((0.6 / maxDim) * S.scaleMultiplier);
+     model.scale.setScalar(0.1);
+     model.position.y = 0;
+      
     } else {
       console.warn("⚠️ maxDim = 0 → modèle invisible !");
     }
