@@ -235,7 +235,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;heigh
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
-
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/environments/RoomEnvironment.js"></script>
 <script>
 /* ═══════════════════════════════════════════
    STATE
@@ -298,6 +298,8 @@ let scene, camera3, renderer3, loader;
 let xrReferenceSpace = null;
 let xrReticleMesh = null;
 
+
+
 function initThreeJS() {
   scene = new THREE.Scene();
   camera3 = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 100);
@@ -315,6 +317,13 @@ function initThreeJS() {
   renderer3.shadowMap.enabled = true;
   renderer3.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer3.xr.enabled = true;
+
+  // Après la création du renderer3, ajoute ces lignes :
+const pmremGenerator = new THREE.PMREMGenerator(renderer3);
+pmremGenerator.compileEquirectangularShader();
+const envTexture = pmremGenerator.fromScene(new THREE.RoomEnvironment()).texture;
+scene.environment = envTexture; // ← c'est ça qui fait marcher les matériaux PBR
+pmremGenerator.dispose();
 
   const ambient = new THREE.AmbientLight(0xffffff, 1.4);
   scene.add(ambient);
@@ -643,10 +652,20 @@ model.position.y += 0.01; // 🔥 AJOUTE ÇA
 
         // ── STEP 4 : materials ──
        // Fix matériaux
+// Par :
 model.traverse(c => {
   if (c.isMesh) {
     c.material.side = THREE.DoubleSide;
-    c.material.needsUpdate = true;
+    // Corrige l'encoding de chaque texture du matériau
+    const mats = Array.isArray(c.material) ? c.material : [c.material];
+    mats.forEach(mat => {
+      ['map','normalMap','roughnessMap','metalnessMap','emissiveMap','aoMap'].forEach(key => {
+        if (mat[key]) mat[key].encoding = THREE.sRGBEncoding;
+      });
+      mat.needsUpdate = true;
+    });
+    c.castShadow = true;
+    c.receiveShadow = true;
   }
 });
         group.add(model);
@@ -824,12 +843,7 @@ function onSheetDragEnd() { if (shDragStartY === null) return; const h = sheet.g
 window.addEventListener('mouseup', onSheetDragEnd);
 window.addEventListener('touchend', onSheetDragEnd);
 handleEl.addEventListener('click', () => { const h = sheet.getBoundingClientRect().height; setSheetH(h <= PEEK + 10 ? MID : h >= FULL - 20 ? PEEK : FULL); });
-const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
-scene.add(light);
 
-const dirLight = new THREE.DirectionalLight(0xffffff, 1);
-dirLight.position.set(0, 10, 0);
-scene.add(dirLight);
 /* ═══════════════════════════════════════════
    PLACE / RESET / CAPTURE
 ═══════════════════════════════════════════ */
