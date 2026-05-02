@@ -259,8 +259,83 @@ const S = {
   reticleVisible: false,
   currentHitMatrix: null,
   meshIdCounter: 0,
+  currentSurfaceType: 'floor',   // 'floor' | 'wall' | 'ceiling'
+detectedPlanes: new Map(), 
 };
+// Détermine floor / wall / ceiling depuis la normale du hit pose
+function getSurfaceTypeFromPose(pose) {
+  // La normale "up" du plan est l'axe Y de la matrice de pose
+  const m = pose.transform.matrix;
+  // Composante Y de l'axe Y local (index 5 dans column-major)
+  const normalY = m[5];
+  // Composante Y de l'axe Z local (index 9) → pour les plans verticaux
+  const normalZ = m[9];
 
+  if (Math.abs(normalY) > 0.7) {
+    // Plan horizontal
+    return normalY > 0 ? 'floor' : 'ceiling';
+  } else {
+    return 'wall';
+  }
+}
+
+// Met à jour le reticule et le toast selon le type de surface
+function updateSurfaceUI(type) {
+  const labels = {
+    floor:   '⬇ Sol détecté — tapez pour placer',
+    wall:    '⬅ Mur détecté — tapez pour placer',
+    ceiling: '⬆ Plafond détecté — tapez pour placer',
+  };
+  const colors = { floor: '#52B46B', wall: '#284F75', ceiling: '#F59064' };
+
+  if (S.pendingPlace) {
+    setStatus(labels[type] || labels.floor, 'scanning');
+  }
+  // Change la couleur du reticule selon la surface
+  if (xrReticleMesh) {
+    xrReticleMesh.material.color.set(colors[type] || colors.floor);
+  }
+}
+
+// Visualise les plans détectés avec un mesh semi-transparent
+function visualizePlane(plane, pose) {
+  if (!S.detectedPlanes) S.detectedPlanes = new Map();
+
+  let planeMesh = S.detectedPlanes.get(plane);
+
+  if (!planeMesh) {
+    const type = plane.orientation === 'vertical' ? 'wall' : 'floor';
+    const color = type === 'wall' ? 0x284F75 : type === 'ceiling' ? 0xF59064 : 0x52B46B;
+
+    const geo = new THREE.PlaneGeometry(1, 1);
+    const mat = new THREE.MeshBasicMaterial({
+      color,
+      transparent: true,
+      opacity: 0.12,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+    });
+    planeMesh = new THREE.Mesh(geo, mat);
+    planeMesh.name = 'detectedPlane_' + type;
+    scene.add(planeMesh);
+    S.detectedPlanes.set(plane, planeMesh);
+  }
+
+  // Met à jour la pose du plan
+  const m = new THREE.Matrix4().fromArray(pose.transform.matrix);
+  planeMesh.matrix.copy(m);
+  planeMesh.matrixAutoUpdate = false;
+
+  // Redimensionne selon le polygon du plan
+  if (plane.polygon && plane.polygon.length > 2) {
+    let maxX = 0, maxZ = 0;
+    plane.polygon.forEach(p => {
+      maxX = Math.max(maxX, Math.abs(p.x));
+      maxZ = Math.max(maxZ, Math.abs(p.z));
+    });
+    planeMesh.scale.set(maxX * 2, maxZ * 2, 1);
+  }
+}
 /* ═══════════════════════════════════════════
    DOM REFS
 ═══════════════════════════════════════════ */
@@ -365,19 +440,23 @@ async function startXRSession() {
   try {
     const session = await navigator.xr.requestSession('immersive-ar', {
       requiredFeatures: ['hit-test'],
-      optionalFeatures: ['dom-overlay', 'light-estimation'],
+      optionalFeatures: ['dom-overlay', 'light-estimation', 'plane-detection'],
       domOverlay: { root: document.body },
     });
 
     S.xrSession = session;
     S.xrMode = true;
+    
 
     renderer3.xr.setReferenceSpaceType('local');
     await renderer3.xr.setSession(session);
     xrReferenceSpace = await session.requestReferenceSpace('local');
 
-    const viewerSpace = await session.requestReferenceSpace('viewer');
-    S.hitTestSource = await session.requestHitTestSource({ space: viewerSpace });
+const viewerSpace = await session.requestReferenceSpace('viewer');
+S.hitTestSource = await session.requestHitTestSource({
+  space: viewerSpace,
+  entityTypes: ['plane', 'point', 'mesh'], // ← détecte murs + plafond + sol
+});
     S.hitTestSourceInitialized = true;
 
     session.addEventListener('end', onXRSessionEnd);
@@ -420,6 +499,7 @@ function onXRSessionEnd() {
 function xrRenderLoop(timestamp, frame) {
   if (!frame) return;
 
+  // ── Hit-test (reticule) ──
   if (S.hitTestSourceInitialized && S.hitTestSource) {
     const hitTestResults = frame.getHitTestResults(S.hitTestSource);
     if (hitTestResults.length > 0) {
@@ -431,6 +511,10 @@ function xrRenderLoop(timestamp, frame) {
         xrReticleMesh.matrix.fromArray(pose.transform.matrix);
         S.currentHitMatrix = pose.transform.matrix;
         S.reticleVisible = true;
+
+        // Détermine le type de surface via la normale du hit
+        S.currentSurfaceType = getSurfaceTypeFromPose(pose);
+        updateSurfaceUI(S.currentSurfaceType);
       }
     } else {
       xrReticle.classList.remove('visible');
@@ -438,9 +522,24 @@ function xrRenderLoop(timestamp, frame) {
     }
   }
 
+  // ── Plane detection (visualisation optionnelle) ──
+  if (frame.detectedPlanes) {
+    frame.detectedPlanes.forEach(plane => {
+      const pose = frame.getPose(plane.planeSpace, xrReferenceSpace);
+      if (!pose) return;
+      visualizePlane(plane, pose);
+    });
+    // Supprime les plans qui ont disparu
+    S.detectedPlanes.forEach((mesh, plane) => {
+      if (!frame.detectedPlanes.has(plane)) {
+        scene.remove(mesh);
+        S.detectedPlanes.delete(plane);
+      }
+    });
+  }
+
   renderer3.render(scene, camera3);
 }
-
 /* ═══════════════════════════════════════════
    FALLBACK CAMERA MODE
 ═══════════════════════════════════════════ */
@@ -632,6 +731,19 @@ function placeProductAtPosition(pos, quat) {
         const finalScale = modelScale * S.scaleMultiplier;
         model.scale.setScalar(finalScale);
         model.updateMatrixWorld(true);
+        // Ajuste la position selon le type de surface
+if (S.currentSurfaceType === 'wall') {
+  // Sur un mur : le modèle "sort" du mur (offset en Z local)
+  model.position.z += 0.02;
+  model.position.y -= bb2.min.y; // centre en hauteur
+} else if (S.currentSurfaceType === 'ceiling') {
+  // Au plafond : flip + accroche vers le bas
+  model.rotation.x = Math.PI;
+  model.position.y += bb2.max.y; // au lieu de min.y
+} else {
+  // Sol : comportement existant
+  model.position.y -= bb2.min.y;
+}
 
         // ── STEP 3 : centre X/Z and sit on ground (Y) ──
         const bb2 = new THREE.Box3().setFromObject(model);
@@ -960,7 +1072,15 @@ function selectProductById(id) {
   S.pendingPlace = true;
   const p = S.catalog.find(p => p.id === id);
   if (p) {
-    setStatus(escapeHtml(p.name || '') + ' — tapez le sol pour placer', 'scanning');
+    // Détermine la surface cible selon la catégorie
+    const isWallProduct    = /tableau|cadre|miroir|applique|papier.peint|wallpaper/i.test(p.name + ' ' + p.category);
+    const isCeilingProduct = /plafond|ceiling|lustre|suspension|lampe.plafond/i.test(p.name + ' ' + p.category);
+
+    let hint = 'Pointez le sol';
+    if (isWallProduct)    hint = 'Pointez un mur';
+    if (isCeilingProduct) hint = 'Pointez le plafond';
+
+    setStatus(`${p.name} — ${hint} pour placer`, 'scanning');
     setSheetH(PEEK);
   }
   updateActiveCards();
