@@ -23,15 +23,9 @@
   --shadow:0 8px 40px rgba(40,79,117,0.18);
 }
 html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:var(--font)}
-
-/* ── THREE CANVAS (WebXR renders into this) ── */
 #threeCanvas{position:fixed;inset:0;width:100%;height:100%;z-index:0}
-
-/* ── RETICLE ── */
 #reticle{position:fixed;z-index:3;pointer-events:none;transform:translate(-50%,-50%);opacity:0;transition:opacity .3s;top:50%;left:50%}
 #reticle.visible{opacity:1}
-
-/* ── TOP BAR ── */
 #topBar{position:fixed;top:0;left:0;right:0;z-index:20;display:flex;align-items:center;justify-content:space-between;padding:14px 18px 10px;background:linear-gradient(to bottom,rgba(0,0,0,.65) 0%,transparent 100%);pointer-events:none}
 #topBar>*{pointer-events:auto}
 #appLogoText{font-size:16px;font-weight:700;color:#fff;letter-spacing:-.3px}
@@ -40,8 +34,6 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:var
 .topPill-dot{width:5px;height:5px;border-radius:50%;background:var(--green);animation:pulse .9s infinite}
 #placedBadge{display:none;align-items:center;gap:5px;padding:4px 11px;border-radius:20px;background:rgba(245,144,100,.18);border:1px solid rgba(245,144,100,.4);font-size:10px;font-weight:700;color:var(--primary)}
 #placedBadge.visible{display:flex}
-
-/* ── STATUS TOAST ── */
 #statusToast{position:fixed;top:68px;left:50%;transform:translateX(-50%);z-index:19;display:flex;align-items:center;gap:7px;padding:7px 16px;border-radius:var(--r-xl);font-size:11px;font-weight:500;color:rgba(255,255,255,.9);background:rgba(17,17,17,.78);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.1);white-space:nowrap;pointer-events:none;max-width:90vw}
 #statusDot{width:6px;height:6px;border-radius:50%;background:var(--grey);flex-shrink:0;transition:background .3s}
 #statusToast.ok #statusDot{background:var(--green)}
@@ -51,14 +43,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:var
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes fadeInDown{from{opacity:0;transform:translateX(-50%) translateY(-10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
 #statusToast{animation:fadeInDown .3s ease}
-
-/* ── GLB LOADER ── */
 #glbLoader{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;flex-direction:column;gap:14px}
 #glbLoader.visible{display:flex}
 .spin{width:34px;height:34px;border:3px solid rgba(245,144,100,.25);border-top-color:var(--primary);border-radius:50%;animation:spin .7s linear infinite}
 #glbLoader p{color:rgba(255,255,255,.8);font-size:12px;font-weight:500}
-
-/* ── ACTION BAR (selected object) ── */
 #actionBar{position:fixed;bottom:0;left:0;right:0;z-index:25;transform:translateY(100%);transition:transform .3s cubic-bezier(.32,.72,0,1)}
 #actionBar.visible{transform:translateY(0)}
 #actionBarInner{margin:0 12px 12px;background:var(--white);border-radius:var(--r-lg);padding:12px 14px;display:flex;align-items:center;gap:8px;box-shadow:var(--shadow);flex-wrap:wrap}
@@ -68,35 +56,24 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:var
 .aBtn.delete{color:var(--red)}.aBtn.delete svg{stroke:var(--red)}
 .aBtn.confirm{background:var(--secondary);color:#fff}.aBtn.confirm svg{stroke:#fff}
 #selectedProductName{font-size:11px;font-weight:700;color:var(--secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:80px;flex-shrink:0}
-
-/* ── BOTTOM SHEET ── */
 #sheet{position:fixed;bottom:0;left:0;right:0;z-index:30;background:var(--white);border-radius:var(--r-lg) var(--r-lg) 0 0;box-shadow:var(--shadow);display:flex;flex-direction:column;transition:height .35s cubic-bezier(.32,.72,0,1)}
 #sheetHandle{width:100%;padding:12px 0 6px;cursor:grab;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 #handleBar{width:38px;height:4px;border-radius:3px;background:var(--lg)}
-
-/* ── QUICK ROW ── */
 #quickRow{display:flex;align-items:center;gap:6px;padding:0 12px 10px;flex-shrink:0}
 .qBtn{flex:1;display:flex;align-items:center;justify-content:center;gap:4px;padding:10px 6px;border-radius:var(--r-md);border:none;cursor:pointer;font-family:var(--font);font-size:10px;font-weight:600;transition:all .18s;white-space:nowrap;min-width:0}
 .qBtn:active{transform:scale(.96)}
 .qBtn-primary{background:var(--secondary);color:#fff}
 .qBtn-ghost{background:var(--lg2);color:var(--hint)}
 .qBtn-danger{background:rgba(221,80,80,.12);color:var(--red)}
-
-/* ── SHEET CONTENT ── */
 #sheetContent{flex:1;overflow-y:auto;padding:0 14px 28px;-webkit-overflow-scrolling:touch;scrollbar-width:none;min-height:0}
 #sheetContent::-webkit-scrollbar{display:none}
 #sheet.collapsed #sheetContent{overflow:hidden;opacity:0;pointer-events:none}
-
 .secLabel{font-size:9px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--grey);margin:12px 0 8px;display:flex;align-items:center;gap:7px}
 .secLabel::after{content:'';flex:1;height:1px;background:var(--lg)}
-
-/* ── CATEGORY TABS ── */
 #catTabs{display:flex;gap:6px;overflow-x:auto;padding:4px 0 10px;scrollbar-width:none}
 #catTabs::-webkit-scrollbar{display:none}
 .catTab{flex-shrink:0;padding:7px 14px;border-radius:var(--r-xl);font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;border:1.5px solid var(--lg);background:var(--lg2);color:var(--grey);cursor:pointer;transition:all .2s}
 .catTab.active{background:var(--secondary);color:#fff;border-color:var(--secondary)}
-
-/* ── PRODUCT SCROLL ── */
 #productScroll{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
 #productScroll::-webkit-scrollbar{display:none}
 .prodCard{flex-shrink:0;width:120px;border-radius:var(--r-md);border:1.5px solid var(--lg);background:var(--lg2);cursor:pointer;overflow:hidden;transition:all .2s;position:relative}
@@ -107,15 +84,11 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:var
 .prodCard-name{font-size:9px;font-weight:700;color:var(--hint);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .prodCard-sub{font-size:8px;color:var(--grey);margin-top:1px}
 .prodCard-badge{position:absolute;top:5px;right:5px;background:rgba(40,79,117,.88);color:#fff;font-size:7px;font-weight:700;padding:2px 6px;border-radius:10px}
-
-/* ── SLIDERS ── */
 input[type=range]{-webkit-appearance:none;width:100%;height:4px;background:var(--lg);border-radius:3px;outline:none}
 input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--secondary);cursor:pointer;border:2px solid #fff}
 .sliderHead{display:flex;justify-content:space-between;align-items:center;font-size:10px;font-weight:600;color:var(--dg);margin-bottom:4px}
 .sliderHead .val{background:var(--lg2);border-radius:var(--r-sm);padding:2px 7px;font-size:10px;font-weight:700;color:var(--secondary)}
 #controlsGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:4px}
-
-/* ── START SCREEN (before WebXR session) ── */
 #startScreen{position:fixed;inset:0;z-index:100;background:linear-gradient(135deg,#0a0f1a 0%,#1a2a3a 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px}
 #startScreen.hidden{display:none}
 .startIcon{width:80px;height:80px;border-radius:28px;background:rgba(245,144,100,.15);border:1px solid rgba(245,144,100,.3);display:flex;align-items:center;justify-content:center;margin-bottom:24px}
@@ -127,32 +100,20 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;heigh
 #startArBtn{padding:16px 40px;background:var(--primary);color:#fff;border:none;border-radius:var(--r-xl);font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 6px 24px rgba(245,144,100,.4);width:100%;max-width:280px}
 #startArBtn:disabled{opacity:.5;cursor:not-allowed}
 #noXrMsg{color:rgba(255,100,100,.8);font-size:12px;margin-top:12px;text-align:center;display:none}
-
-/* ── FALLBACK (camera-based if no WebXR) ── */
 #videoEl{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;display:none}
-
-/* ── SAVE TOAST ── */
 #saveToast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:200;display:flex;flex-direction:column;align-items:center;gap:10px;padding:24px 32px;background:rgba(20,30,40,.92);backdrop-filter:blur(20px);border-radius:var(--r-lg);border:1px solid rgba(255,255,255,.15);color:#fff;font-size:13px;font-weight:600;pointer-events:none;opacity:0;transition:opacity .3s;text-align:center}
 #saveToast.show{opacity:1}
-
-/* ── XR HIT TEST indicator (center of screen) ── */
 #xrReticle{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:5;pointer-events:none;opacity:0;transition:opacity .4s}
 #xrReticle.visible{opacity:1}
-
-/* ── SCALE HINT ── */
 #scaleHint{position:fixed;bottom:160px;left:50%;transform:translateX(-50%);z-index:19;padding:6px 14px;border-radius:20px;background:rgba(0,0,0,.6);color:rgba(255,255,255,.8);font-size:10px;font-weight:500;pointer-events:none;opacity:0;transition:opacity .3s}
 #scaleHint.visible{opacity:1}
 </style>
 </head>
 <body>
 
-<!-- FALLBACK VIDEO (non-WebXR) -->
 <video id="videoEl" autoplay playsinline muted></video>
-
-<!-- THREE.JS CANVAS -->
 <canvas id="threeCanvas"></canvas>
 
-<!-- XR RETICLE overlay (2D indicator) -->
 <div id="xrReticle">
   <svg width="70" height="70" viewBox="0 0 70 70" fill="none">
     <ellipse cx="35" cy="35" rx="30" ry="11" stroke="rgba(245,144,100,.85)" stroke-width="1.5" stroke-dasharray="6 4"/>
@@ -163,14 +124,9 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;heigh
 </div>
 
 <div id="scaleHint">Pincez pour redimensionner</div>
-
-<!-- GLB LOADER -->
 <div id="glbLoader"><div class="spin"></div><p id="glbLoaderText">Chargement…</p></div>
-
-<!-- SAVE TOAST -->
 <div id="saveToast"><span id="saveToastIcon">📸</span><span id="saveToastText">Capture !</span></div>
 
-<!-- START SCREEN -->
 <div id="startScreen">
   <div class="startIcon">
     <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
@@ -192,7 +148,6 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;heigh
   <div id="noXrMsg">WebXR non supporté sur cet appareil.<br>Mode caméra classique activé.</div>
 </div>
 
-<!-- TOP BAR -->
 <div id="topBar" style="display:none">
   <div style="display:flex;align-items:center;gap:8px">
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -211,10 +166,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;heigh
   </div>
 </div>
 
-<!-- STATUS -->
 <div id="statusToast" style="display:none"><div id="statusDot"></div><span id="statusText">Initialisation…</span></div>
 
-<!-- ACTION BAR -->
 <div id="actionBar">
   <div id="actionBarInner">
     <div id="selectedProductName">—</div>
@@ -246,7 +199,6 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;heigh
   </div>
 </div>
 
-<!-- BOTTOM SHEET -->
 <div id="sheet" class="collapsed" style="height:92px;display:none">
   <div id="sheetHandle"><div id="handleBar"></div></div>
   <div id="quickRow">
@@ -281,7 +233,6 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;heigh
   </div>
 </div>
 
-<!-- THREE.JS r128 + GLTFLoader -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 
@@ -292,8 +243,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;heigh
 const S = {
   xrSupported: false,
   xrSession: null,
-  xrMode: false,           // true = WebXR running
-  fallbackMode: false,     // true = camera fallback
+  xrMode: false,
+  fallbackMode: false,
   catalog: [],
   selectedProductId: null,
   pendingPlace: false,
@@ -345,11 +296,10 @@ function setStatus(msg, cls='') {
 ═══════════════════════════════════════════ */
 let scene, camera3, renderer3, loader;
 let xrReferenceSpace = null;
-let xrReticleMesh = null;  // Three.js reticle shown in the real world
+let xrReticleMesh = null;
 
 function initThreeJS() {
   scene = new THREE.Scene();
-
   camera3 = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 100);
 
   renderer3 = new THREE.WebGLRenderer({
@@ -364,9 +314,8 @@ function initThreeJS() {
   renderer3.physicallyCorrectLights = true;
   renderer3.shadowMap.enabled = true;
   renderer3.shadowMap.type = THREE.PCFSoftShadowMap;
-  renderer3.xr.enabled = true;   // ← KEY: enable WebXR in renderer
+  renderer3.xr.enabled = true;
 
-  // Lights
   const ambient = new THREE.AmbientLight(0xffffff, 1.4);
   scene.add(ambient);
   const dirLight = new THREE.DirectionalLight(0xffffff, 1.6);
@@ -377,7 +326,6 @@ function initThreeJS() {
   fillLight.position.set(-4, 2, -4);
   scene.add(fillLight);
 
-  // 3D Reticle (shown in world space during hit-test)
   const reticleGeometry = new THREE.RingGeometry(0.12, 0.15, 32).rotateX(-Math.PI / 2);
   const reticleMaterial = new THREE.MeshBasicMaterial({ color: 0xF59064, side: THREE.DoubleSide });
   xrReticleMesh = new THREE.Mesh(reticleGeometry, reticleMaterial);
@@ -400,11 +348,8 @@ function initThreeJS() {
 async function checkXRSupport() {
   if (!navigator.xr) return false;
   try {
-    const supported = await navigator.xr.isSessionSupported('immersive-ar');
-    return supported;
-  } catch {
-    return false;
-  }
+    return await navigator.xr.isSessionSupported('immersive-ar');
+  } catch { return false; }
 }
 
 async function startXRSession() {
@@ -420,28 +365,21 @@ async function startXRSession() {
 
     renderer3.xr.setReferenceSpaceType('local');
     await renderer3.xr.setSession(session);
-
     xrReferenceSpace = await session.requestReferenceSpace('local');
 
-    // Hit test source
     const viewerSpace = await session.requestReferenceSpace('viewer');
     S.hitTestSource = await session.requestHitTestSource({ space: viewerSpace });
     S.hitTestSourceInitialized = true;
 
     session.addEventListener('end', onXRSessionEnd);
-
-    // Start render loop via WebXR
     renderer3.setAnimationLoop(xrRenderLoop);
 
-    // Show UI
     startScreen.classList.add('hidden');
     topBar.style.display = 'flex';
     sheet.style.display = 'flex';
     statusToast.style.display = 'flex';
     xrReticle.classList.add('visible');
-
     setStatus('Pointez le sol pour placer', 'scanning');
-
     postToFlutter({ type: 'xr_started' });
 
     setTimeout(() => {
@@ -452,7 +390,6 @@ async function startXRSession() {
   } catch (err) {
     console.error('WebXR error:', err);
     setStatus('Erreur WebXR: ' + err.message, 'error');
-    // Fallback to camera mode
     startFallbackMode();
   }
 }
@@ -474,16 +411,11 @@ function onXRSessionEnd() {
 function xrRenderLoop(timestamp, frame) {
   if (!frame) return;
 
-  const session = renderer3.xr.getSession();
-
-  // ── Hit test ──
   if (S.hitTestSourceInitialized && S.hitTestSource) {
     const hitTestResults = frame.getHitTestResults(S.hitTestSource);
-
     if (hitTestResults.length > 0) {
       const hit = hitTestResults[0];
       const pose = hit.getPose(xrReferenceSpace);
-
       if (pose) {
         xrReticleMesh.visible = true;
         xrReticle.classList.add('visible');
@@ -501,12 +433,10 @@ function xrRenderLoop(timestamp, frame) {
 }
 
 /* ═══════════════════════════════════════════
-   FALLBACK CAMERA MODE (non-WebXR)
+   FALLBACK CAMERA MODE
 ═══════════════════════════════════════════ */
 async function startFallbackMode() {
   S.fallbackMode = true;
-  console.log('Starting fallback camera mode');
-
   try {
     const stream = await navigator.mediaDevices.getUserMedia({
       video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
@@ -520,12 +450,8 @@ async function startFallbackMode() {
     return;
   }
 
-  // Non-XR render loop
-  renderer3.setAnimationLoop(() => {
-    renderer3.render(scene, camera3);
-  });
+  renderer3.setAnimationLoop(() => renderer3.render(scene, camera3));
 
-  // Floor plane for raycasting
   const fl = new THREE.Mesh(
     new THREE.PlaneGeometry(20, 20),
     new THREE.MeshBasicMaterial({ visible: false, side: THREE.DoubleSide })
@@ -544,10 +470,8 @@ async function startFallbackMode() {
   xrReticle.classList.add('visible');
   S.reticleVisible = true;
   S.currentHitMatrix = null;
-
   setStatus('Mode caméra (WebXR non dispo)', 'ok');
 
-  // Touch for placing in fallback mode
   threeCanvas.addEventListener('click', (e) => {
     if (!S.pendingPlace || !S.selectedProductId) return;
     const pos = screenToFloor(e.clientX, e.clientY);
@@ -556,9 +480,8 @@ async function startFallbackMode() {
 }
 
 /* ═══════════════════════════════════════════
-   TOUCH / TAP HANDLING (WebXR mode)
+   TOUCH / TAP HANDLING
 ═══════════════════════════════════════════ */
-// In WebXR, tap is handled via session select event
 function setupXRSelect() {
   if (!S.xrSession) return;
   S.xrSession.addEventListener('select', () => {
@@ -572,7 +495,6 @@ function setupXRSelect() {
       S.pendingPlace = false;
       setStatus('Placé ! Tapez pour en ajouter un autre', 'ok');
     } else {
-      // Tap without pending = try to select existing object (simple ray from center)
       const objHit = hitTestObjects();
       if (objHit) selectObject(objHit.id);
       else deselectObject();
@@ -580,7 +502,6 @@ function setupXRSelect() {
   });
 }
 
-// Raycaster for fallback mode
 const raycaster = new THREE.Raycaster();
 function screenToFloor(sx, sy) {
   const nx = (sx / window.innerWidth) * 2 - 1;
@@ -593,7 +514,6 @@ function screenToFloor(sx, sy) {
 }
 
 function hitTestObjects() {
-  // Ray from screen center
   raycaster.setFromCamera({ x: 0, y: 0 }, camera3);
   const meshes = S.placedObjects.map(o => o.group);
   const hits = raycaster.intersectObjects(meshes, true);
@@ -604,7 +524,7 @@ function hitTestObjects() {
 }
 
 /* ═══════════════════════════════════════════
-   PLACE PRODUCT
+   ✅ PLACE PRODUCT — FIXED SCALE
 ═══════════════════════════════════════════ */
 function placeProductAtPosition(pos, quat) {
   const product = S.catalog.find(p => p.id === S.selectedProductId);
@@ -625,6 +545,7 @@ function placeProductAtPosition(pos, quat) {
     name: product.name,
     rotY: 0,
     scaleVal: S.scaleMultiplier,
+    baseScale: 1,  // sera mis à jour après chargement
   };
   S.placedObjects.push(entry);
   updatePlacedBadge();
@@ -632,133 +553,127 @@ function placeProductAtPosition(pos, quat) {
   if (product.modelUrl && product.modelUrl.length > 4) {
     glbLoader.classList.add('visible');
     glbLoaderText.textContent = 'Chargement modèle 3D…';
+    console.log("🚀 TRY LOAD:", product.modelUrl);
 
-   
-        console.log("🚀 TRY LOAD:", product.modelUrl);
+    loader.load(
+      product.modelUrl,
 
-loader.load(
-  product.modelUrl,
+      // ✅ SUCCESS
+      (gltf) => {
+        console.log("✅ GLB LOADED");
+        glbLoader.classList.remove('visible');
 
-  // ✅ SUCCESS
-  (gltf) => {
-    console.log("✅ GLB LOADED SUCCESS");
-    console.log("📦 GLTF:", gltf);
+        const model = gltf.scene;
+        if (!model) { console.error("❌ model is null"); return; }
 
-    glbLoader.classList.remove('visible');
-
-    const model = gltf.scene;
-
-    if (!model) {
-      console.error("❌ model is null !");
-      return;
-    }
-
-    console.log("📐 Children count:", model.children.length);
-
-    model.traverse(c => {
-      if (c.isMesh) {
-        console.log("🧱 Mesh found:", c.name);
-
-        c.castShadow = true;
-        c.receiveShadow = true;
-
-        const mats = Array.isArray(c.material) ? c.material : [c.material];
-
-        c.material = mats.map(m => {
-          const mc = m.clone();
-          mc.transparent = S.opacity < 1.0;
-          mc.opacity = S.opacity;
-          mc.needsUpdate = true;
-          return mc;
+        // Matériaux + ombres
+        model.traverse(c => {
+          if (c.isMesh) {
+            c.castShadow = true;
+            c.receiveShadow = true;
+            const mats = Array.isArray(c.material) ? c.material : [c.material];
+            c.material = mats.map(m => {
+              const mc = m.clone();
+              mc.transparent = S.opacity < 1.0;
+              mc.opacity = S.opacity;
+              mc.needsUpdate = true;
+              return mc;
+            });
+          }
         });
+
+        // ── SCALE INTELLIGENT (inspiré du 2ème code) ──
+        const bb = new THREE.Box3().setFromObject(model);
+        const size = bb.getSize(new THREE.Vector3());
+        const nativeHeight = size.y;
+
+        console.log("📏 SIZE:", size, "| nativeHeight:", nativeHeight);
+
+        let modelScale;
+        if (nativeHeight <= 0) {
+          // Modèle vide ou invalide
+          console.warn("⚠️ nativeHeight = 0, scale forcé à 1");
+          modelScale = 1.0;
+        } else if (nativeHeight < 0.01) {
+          // Modèle trop petit → agrandir pour atteindre ~1m
+          modelScale = 1.0 / nativeHeight;
+        } else if (nativeHeight > 10) {
+          // Modèle en millimètres (ex: 943mm) → réduire pour atteindre ~1m
+          modelScale = 1.0 / nativeHeight;
+        } else {
+          // Modèle déjà en mètres → taille correcte
+          modelScale = 1.0;
+        }
+
+        // Stocker le scale de base (sans le multiplicateur utilisateur)
+        entry.baseScale = modelScale;
+
+        // Appliquer scale avec multiplicateur utilisateur
+        const finalScale = modelScale * S.scaleMultiplier;
+        model.scale.setScalar(finalScale);
+
+        console.log("📐 modelScale:", modelScale, "| finalScale:", finalScale);
+
+        // Recalculer bounding box après scale pour centrage et lift
+        model.updateMatrixWorld(true);
+        const bb2 = new THREE.Box3().setFromObject(model);
+        const center = bb2.getCenter(new THREE.Vector3());
+
+        // Centrer X/Z
+        model.position.x -= center.x;
+        model.position.z -= center.z;
+
+        // Poser le modèle sur le sol (y=0 du groupe)
+        const modelLift = -bb2.min.y;
+        model.position.y = modelLift;
+
+        console.log("📐 lift:", modelLift, "| center:", center);
+
+        group.add(model);
+        entry.model = model;
+
+        console.log("✅ MODEL ADDED TO SCENE");
+        selectObject(id);
+      },
+
+      // ⏳ PROGRESS
+      (progress) => {
+        if (progress.total > 0) {
+          console.log(`⏳ Loading: ${(progress.loaded / progress.total * 100).toFixed(1)}%`);
+        }
+      },
+
+      // ❌ ERROR
+      (err) => {
+        glbLoader.classList.remove('visible');
+        console.error("❌ GLB ERROR:", err?.message || err);
+
+        // Fallback cube visible
+        const fb = new THREE.Mesh(
+          new THREE.BoxGeometry(0.5, 0.5, 0.5),
+          new THREE.MeshStandardMaterial({ color: 0xccaa88, transparent: true, opacity: S.opacity })
+        );
+        fb.position.y = 0.25; // poser sur le sol
+        group.add(fb);
+        entry.model = fb;
+        entry.baseScale = 1;
+        selectObject(id);
       }
-    });
-
-    const bb = new THREE.Box3().setFromObject(model);
-    const size = bb.getSize(new THREE.Vector3());
-    const maxDim = Math.max(size.x, size.y, size.z);
-
-    console.log("📏 SIZE:", size);
-
-  if (maxDim > 0) {
-  // Auto-detect unit: if model > 10 units, assume millimeters
-  const isMillimeters = maxDim > 10;
-  const targetMeters = 1.2; // desired size in AR (meters)
-  const targetUnits = isMillimeters ? targetMeters * 1000 : targetMeters;
-  model.scale.setScalar((targetUnits / maxDim) * S.scaleMultiplier);
-    } else {
-      console.warn("⚠️ maxDim = 0 → modèle invisible !");
-    }
-
-    const bb2 = new THREE.Box3().setFromObject(model);
-    const center = bb2.getCenter(new THREE.Vector3());
-
-    model.position.x -= center.x;
-    model.position.z -= center.z;
-
-    group.add(model);
-    entry.model = model;
-
-    console.log("✅ MODEL ADDED TO SCENE");
-
-    selectObject(id);
-  },
-
-  // ⏳ PROGRESS
-  (progress) => {
-    if (progress.total > 0) {
-      const percent = (progress.loaded / progress.total * 100).toFixed(2);
-      console.log(`⏳ Loading: ${percent}%`);
-    } else {
-      console.log("⏳ Loading... (no total)");
-    }
-  },
-
-  // ❌ ERROR
-  (err) => {
-    glbLoader.classList.remove('visible');
-
-    console.error("❌ GLB ERROR:", err);
-    console.error("❌ URL:", product.modelUrl);
-
-    if (err?.message) {
-      console.error("❌ MESSAGE:", err.message);
-    }
-
-    // fallback cube
-    const fb = new THREE.Mesh(
-      new THREE.BoxGeometry(0.4, 0.4, 0.4),
-      new THREE.MeshStandardMaterial({
-        color: 0xccaa88,
-        transparent: true,
-        opacity: S.opacity
-      })
     );
-
-    group.add(fb);
-    entry.model = fb;
-
-    console.log("⚠️ FALLBACK BOX USED");
-
-    selectObject(id);
-  }
-);
 
   } else {
-    // No model, just a placeholder box
+    // Pas de modèle → cube placeholder
     const placeholder = new THREE.Mesh(
-      new THREE.BoxGeometry(0.4, 0.4, 0.4),
-      new THREE.MeshStandardMaterial({
-        color: 0xccaa88,
-        transparent: true,
-        opacity: S.opacity
-      })
+      new THREE.BoxGeometry(0.5, 0.5, 0.5),
+      new THREE.MeshStandardMaterial({ color: 0xccaa88, transparent: true, opacity: S.opacity })
     );
+    placeholder.position.y = 0.25;
     group.add(placeholder);
     entry.model = placeholder;
+    entry.baseScale = 1;
     selectObject(id);
   }
-    
+
   postToFlutter({ type: 'placed', count: S.placedObjects.length });
 }
 
@@ -782,15 +697,17 @@ function rotateSelected(deg) {
   obj.rotY += deg * Math.PI / 180;
   obj.group.rotation.y = obj.rotY;
 }
+
+// ✅ Scale corrigé : utilise baseScale
 function scaleObject(obj, val) {
   const c = Math.max(0.05, Math.min(8, val));
   obj.scaleVal = c;
   if (obj.model) {
-    // Re-scale model inside group
-    const product = S.catalog.find(p => p.id === obj.productId);
-    obj.group.scale.setScalar(c);
+    const base = obj.baseScale || 1;
+    obj.model.scale.setScalar(base * c);
   }
 }
+
 function deleteSelected() {
   const obj = S.placedObjects.find(o => o.id === S.selectedObjectId);
   if (!obj) return;
@@ -821,7 +738,7 @@ function updateAllOpacity() {
 }
 
 /* ═══════════════════════════════════════════
-   TOUCH PINCH (scale selected object)
+   TOUCH PINCH (scale)
 ═══════════════════════════════════════════ */
 document.addEventListener('touchstart', e => {
   if (e.touches.length === 2) {
@@ -889,7 +806,7 @@ window.addEventListener('touchend', onSheetDragEnd);
 handleEl.addEventListener('click', () => { const h = sheet.getBoundingClientRect().height; setSheetH(h <= PEEK + 10 ? MID : h >= FULL - 20 ? PEEK : FULL); });
 
 /* ═══════════════════════════════════════════
-   PLACE / RESET / CAPTURE BUTTONS
+   PLACE / RESET / CAPTURE
 ═══════════════════════════════════════════ */
 document.getElementById('placeBtn').addEventListener('click', () => {
   if (!S.selectedProductId && S.catalog.length > 0) {
@@ -899,18 +816,11 @@ document.getElementById('placeBtn').addEventListener('click', () => {
   if (!S.selectedProductId) return;
 
   if (S.xrMode) {
-    // In XR mode: arm pending place, next tap (select event) will place it
     S.pendingPlace = true;
     setStatus('Tapez sur le sol pour placer', 'scanning');
     setSheetH(PEEK);
   } else {
-    // Fallback: place at center of screen
-    if (S.currentHitMatrix) {
-      const pos = new THREE.Vector3(0, 0, -1.5);
-      placeProductAtPosition(pos, null);
-    } else {
-      placeProductAtPosition(new THREE.Vector3(0, 0, -1.5), null);
-    }
+    placeProductAtPosition(new THREE.Vector3(0, 0, -1.5), null);
     S.pendingPlace = false;
   }
 });
@@ -945,19 +855,21 @@ document.getElementById('opacSlider').addEventListener('input', e => {
 });
 
 /* ═══════════════════════════════════════════
-   CATALOG / PRODUCTS
+   CATALOG
 ═══════════════════════════════════════════ */
 window.loadProductCatalog = function (products) {
-  console.log('[PlaceAR] Catalog received:', products.length, 'products');
+  console.log('[PlaceAR] Catalog:', products.length, 'products');
   S.catalog = products;
   buildCategoryTabs(products);
   renderProductCards(products);
   setStatus(products.length + ' produit(s) chargé(s)', 'ok');
   setSheetH(MID);
 };
+
 window.onerror = function (msg, url, line, col, error) {
   console.error("💥 GLOBAL ERROR:", msg, url, line, col, error);
 };
+
 function buildCategoryTabs(products) {
   const cats = [...new Set(products.map(p => p.category).filter(Boolean))];
   catTabs.innerHTML = '';
@@ -1033,18 +945,13 @@ async function doCapture() {
     t.classList.add('show');
     setTimeout(() => t.classList.remove('show'), 2200);
   };
-
   try {
     renderer3.render(scene, camera3);
     threeCanvas.toBlob(async blob => {
       if (!blob) return;
       const file = new File([blob], 'placeAR.png', { type: 'image/png' });
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        try {
-          await navigator.share({ files: [file], title: 'PlaceAR' });
-          showSaveToast('📸', 'Partagé !');
-          return;
-        } catch {}
+        try { await navigator.share({ files: [file], title: 'PlaceAR' }); showSaveToast('📸', 'Partagé !'); return; } catch {}
       }
       const a = document.createElement('a');
       a.download = 'placeAR.png';
@@ -1053,9 +960,7 @@ async function doCapture() {
       setTimeout(() => URL.revokeObjectURL(a.href), 3000);
       showSaveToast('💾', 'Image sauvegardée !');
     }, 'image/png');
-  } catch (e) {
-    showSaveToast('❌', 'Erreur capture');
-  }
+  } catch (e) { showSaveToast('❌', 'Erreur capture'); }
   postToFlutter({ type: 'capture' });
 }
 
@@ -1064,44 +969,27 @@ async function doCapture() {
 ═══════════════════════════════════════════ */
 function postToFlutter(obj) {
   try {
-    // flutter_inappwebview channel
-    if (window.flutter_inappwebview) {
-      window.flutter_inappwebview.callHandler('FlutterBridge', JSON.stringify(obj));
-      return;
-    }
-    // JavaScriptChannel (webview_flutter)
-    if (typeof FlutterBridge !== 'undefined') {
-      FlutterBridge.postMessage(JSON.stringify(obj));
-      return;
-    }
-    // WKWebView / UIWebView
-    if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.FlutterBridge) {
-      window.webkit.messageHandlers.FlutterBridge.postMessage(JSON.stringify(obj));
-    }
-  } catch (e) {
-    console.log('[Bridge]', obj);
-  }
+    if (window.flutter_inappwebview) { window.flutter_inappwebview.callHandler('FlutterBridge', JSON.stringify(obj)); return; }
+    if (typeof FlutterBridge !== 'undefined') { FlutterBridge.postMessage(JSON.stringify(obj)); return; }
+    if (window.webkit?.messageHandlers?.FlutterBridge) { window.webkit.messageHandlers.FlutterBridge.postMessage(JSON.stringify(obj)); }
+  } catch (e) { console.log('[Bridge]', obj); }
 }
 
 window.receiveFromFlutter = function (jsonStr) {
   try {
     const data = JSON.parse(jsonStr);
-    if (data.type === 'catalog' && data.products) {
-      window.loadProductCatalog(data.products);
-    }
+    if (data.type === 'catalog' && data.products) window.loadProductCatalog(data.products);
     if (data.type === 'clear') {
       S.placedObjects.forEach(o => scene && scene.remove(o.group));
       S.placedObjects = [];
       deselectObject();
       updatePlacedBadge();
     }
-  } catch (e) {
-    console.error('receiveFromFlutter', e);
-  }
+  } catch (e) { console.error('receiveFromFlutter', e); }
 };
 
 /* ═══════════════════════════════════════════
-   URL PARAMS (Flutter passes products via URL)
+   URL PARAMS
 ═══════════════════════════════════════════ */
 function loadFromUrlParams() {
   const params = new URLSearchParams(window.location.search);
@@ -1109,18 +997,20 @@ function loadFromUrlParams() {
   if (productsParam) {
     try {
       const products = JSON.parse(decodeURIComponent(productsParam));
-      // Map Flutter product format → internal format
-      const mapped = products.map(p => ({
-        id: p.id || p._id,
-        name: p.name,
-        modelUrl: p.modelUrl || p.model3D || p.modelUrl || '',
-        imageUrl: p.imageUrl || p.image || p.thumbnail || '',
-        category: p.category || 'Furniture',
-      }));
+      const mapped = products.map(p => {
+        if (p.modelUrl && p.modelUrl.includes('127.0.0.1') && location.protocol === 'https:') {
+          console.warn('⚠️ Mixed content: modelUrl uses http://127.0.0.1 sur HTTPS → le GLB sera bloqué par le navigateur.');
+        }
+        return {
+          id: p.id || p._id,
+          name: p.name,
+          modelUrl: p.modelUrl || p.model3D || '',
+          imageUrl: p.imageUrl || p.image || p.thumbnail || '',
+          category: p.category || 'Furniture',
+        };
+      });
       setTimeout(() => window.loadProductCatalog(mapped), 500);
-    } catch (e) {
-      console.error('Failed to parse products from URL', e);
-    }
+    } catch (e) { console.error('Failed to parse products from URL', e); }
   }
 }
 
@@ -1133,7 +1023,7 @@ function escapeHtml(s) {
 }
 
 /* ═══════════════════════════════════════════
-   MOCK CATALOG (dev fallback)
+   MOCK CATALOG
 ═══════════════════════════════════════════ */
 const MOCK_CATALOG = [
   { id: 'm1', name: 'Canapé Moderne', category: 'Salon', modelUrl: '', imageUrl: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=200' },
@@ -1155,7 +1045,6 @@ startArBtn.addEventListener('click', async () => {
 
   if (S.xrSupported) {
     await startXRSession();
-    // Setup select event after session is ready
     setupXRSelect();
   } else {
     noXrMsg.style.display = 'block';
@@ -1165,7 +1054,6 @@ startArBtn.addEventListener('click', async () => {
     await startFallbackMode();
   }
 
-  // Load mock if no products after 2s
   setTimeout(() => {
     if (S.catalog.length === 0) {
       console.log('[PlaceAR] Using mock catalog');
