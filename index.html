@@ -680,10 +680,12 @@ loader.load(
 
     console.log("📏 SIZE:", size);
 
-    if (maxDim > 0) {
-     model.scale.setScalar(0.1);
-     model.position.y = 0;
-      
+  if (maxDim > 0) {
+  // Auto-detect unit: if model > 10 units, assume millimeters
+  const isMillimeters = maxDim > 10;
+  const targetMeters = 1.2; // desired size in AR (meters)
+  const targetUnits = isMillimeters ? targetMeters * 1000 : targetMeters;
+  model.scale.setScalar((targetUnits / maxDim) * S.scaleMultiplier);
     } else {
       console.warn("⚠️ maxDim = 0 → modèle invisible !");
     }
