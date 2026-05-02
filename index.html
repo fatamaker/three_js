@@ -524,6 +524,48 @@ function hitTestObjects() {
 }
 
 /* ═══════════════════════════════════════════
+   ✅ SMART SCALE HELPER
+   Normalises any GLB to a real-world target size.
+   Uses the largest dimension (X, Y, or Z) as reference
+   so flat tiles and tall lamps both scale correctly.
+═══════════════════════════════════════════ */
+function computeModelScale(model, category) {
+  // Raw bounding box before any scale change
+  const bb = new THREE.Box3().setFromObject(model);
+  const size = bb.getSize(new THREE.Vector3());
+
+  const maxDim = Math.max(size.x, size.y, size.z);
+  console.log('📏 RAW SIZE:', size, '| maxDim:', maxDim);
+
+  if (maxDim <= 0) {
+    console.warn('⚠️ maxDim = 0, scale forcé à 1');
+    return 1.0;
+  }
+
+  // Detect flat objects (tiles, rugs, floors):
+  // flat if the shortest axis is < 10% of the longest axis
+  const minDim = Math.min(size.x, size.y, size.z);
+  const isFlatObject = minDim / maxDim < 0.10;
+
+  // Target real-world size in METRES:
+  // • flat tile/rug  → 1 m  (a standard floor tile)
+  // • ceiling lamp   → 0.4 m diameter
+  // • furniture      → 1 m  (generic — user can tweak with slider)
+  let TARGET_SIZE = 1.0;
+  if (isFlatObject) {
+    TARGET_SIZE = 1.0; // 1 m tile
+  } else if (category && /clairage|lampe|lamp|light|ceiling/i.test(category)) {
+    TARGET_SIZE = 0.4; // ceiling fixtures are smaller
+  } else {
+    TARGET_SIZE = 1.0;
+  }
+
+  const modelScale = TARGET_SIZE / maxDim;
+  console.log('📐 isFlatObject:', isFlatObject, '| TARGET_SIZE:', TARGET_SIZE, '| modelScale:', modelScale);
+  return modelScale;
+}
+
+/* ═══════════════════════════════════════════
    ✅ PLACE PRODUCT — FIXED SCALE
 ═══════════════════════════════════════════ */
 function placeProductAtPosition(pos, quat) {
@@ -543,9 +585,10 @@ function placeProductAtPosition(pos, quat) {
     group,
     productId: product.id,
     name: product.name,
+    category: product.category || '',
     rotY: 0,
     scaleVal: S.scaleMultiplier,
-    baseScale: 1,  // sera mis à jour après chargement
+    baseScale: 1,
   };
   S.placedObjects.push(entry);
   updatePlacedBadge();
@@ -553,20 +596,50 @@ function placeProductAtPosition(pos, quat) {
   if (product.modelUrl && product.modelUrl.length > 4) {
     glbLoader.classList.add('visible');
     glbLoaderText.textContent = 'Chargement modèle 3D…';
-    console.log("🚀 TRY LOAD:", product.modelUrl);
+    console.log('🚀 TRY LOAD:', product.modelUrl);
 
     loader.load(
       product.modelUrl,
 
       // ✅ SUCCESS
       (gltf) => {
-        console.log("✅ GLB LOADED");
+        console.log('✅ GLB LOADED');
         glbLoader.classList.remove('visible');
 
         const model = gltf.scene;
-        if (!model) { console.error("❌ model is null"); return; }
+        if (!model) { console.error('❌ model is null'); return; }
 
-        // Matériaux + ombres
+        // Reset any transforms baked into the root
+        model.position.set(0, 0, 0);
+        model.rotation.set(0, 0, 0);
+        model.scale.set(1, 1, 1);
+        model.updateMatrixWorld(true);
+
+        // ── STEP 1 : compute smart scale from raw size ──
+        const modelScale = computeModelScale(model, entry.category);
+        entry.baseScale = modelScale;
+
+        // ── STEP 2 : apply scale (base × user multiplier) ──
+        const finalScale = modelScale * S.scaleMultiplier;
+        model.scale.setScalar(finalScale);
+        model.updateMatrixWorld(true);
+
+        // ── STEP 3 : centre X/Z and sit on ground (Y) ──
+        const bb2 = new THREE.Box3().setFromObject(model);
+        const center = bb2.getCenter(new THREE.Vector3());
+
+        model.position.x -= center.x;
+        model.position.z -= center.z;
+        // Lift so the bottom face sits exactly at group Y (= floor hit point)
+        model.position.y -= bb2.min.y;
+
+        console.log(
+          '📐 finalScale:', finalScale,
+          '| lift:', -bb2.min.y,
+          '| scaledSize:', bb2.getSize(new THREE.Vector3())
+        );
+
+        // ── STEP 4 : materials ──
         model.traverse(c => {
           if (c.isMesh) {
             c.castShadow = true;
@@ -582,57 +655,10 @@ function placeProductAtPosition(pos, quat) {
           }
         });
 
-        // ── SCALE INTELLIGENT (inspiré du 2ème code) ──
-        const bb = new THREE.Box3().setFromObject(model);
-        const size = bb.getSize(new THREE.Vector3());
-        const nativeHeight = size.y;
-
-        console.log("📏 SIZE:", size, "| nativeHeight:", nativeHeight);
-
-        let modelScale;
-        if (nativeHeight <= 0) {
-          // Modèle vide ou invalide
-          console.warn("⚠️ nativeHeight = 0, scale forcé à 1");
-          modelScale = 1.0;
-        } else if (nativeHeight < 0.01) {
-          // Modèle trop petit → agrandir pour atteindre ~1m
-          modelScale = 1.0 / nativeHeight;
-        } else if (nativeHeight > 10) {
-          // Modèle en millimètres (ex: 943mm) → réduire pour atteindre ~1m
-          modelScale = 1.0 / nativeHeight;
-        } else {
-          // Modèle déjà en mètres → taille correcte
-          modelScale = 1.0;
-        }
-
-        // Stocker le scale de base (sans le multiplicateur utilisateur)
-        entry.baseScale = modelScale;
-
-        // Appliquer scale avec multiplicateur utilisateur
-        const finalScale = modelScale * S.scaleMultiplier;
-        model.scale.setScalar(finalScale);
-
-        console.log("📐 modelScale:", modelScale, "| finalScale:", finalScale);
-
-        // Recalculer bounding box après scale pour centrage et lift
-        model.updateMatrixWorld(true);
-        const bb2 = new THREE.Box3().setFromObject(model);
-        const center = bb2.getCenter(new THREE.Vector3());
-
-        // Centrer X/Z
-        model.position.x -= center.x;
-        model.position.z -= center.z;
-
-        // Poser le modèle sur le sol (y=0 du groupe)
-        const modelLift = -bb2.min.y;
-        model.position.y = modelLift;
-
-        console.log("📐 lift:", modelLift, "| center:", center);
-
         group.add(model);
         entry.model = model;
 
-        console.log("✅ MODEL ADDED TO SCENE");
+        console.log('✅ MODEL ADDED TO SCENE');
         selectObject(id);
       },
 
@@ -646,14 +672,14 @@ function placeProductAtPosition(pos, quat) {
       // ❌ ERROR
       (err) => {
         glbLoader.classList.remove('visible');
-        console.error("❌ GLB ERROR:", err?.message || err);
+        console.error('❌ GLB ERROR:', err?.message || err);
 
-        // Fallback cube visible
+        // Fallback cube
         const fb = new THREE.Mesh(
           new THREE.BoxGeometry(0.5, 0.5, 0.5),
           new THREE.MeshStandardMaterial({ color: 0xccaa88, transparent: true, opacity: S.opacity })
         );
-        fb.position.y = 0.25; // poser sur le sol
+        fb.position.y = 0.25;
         group.add(fb);
         entry.model = fb;
         entry.baseScale = 1;
@@ -662,7 +688,7 @@ function placeProductAtPosition(pos, quat) {
     );
 
   } else {
-    // Pas de modèle → cube placeholder
+    // No model URL → cube placeholder
     const placeholder = new THREE.Mesh(
       new THREE.BoxGeometry(0.5, 0.5, 0.5),
       new THREE.MeshStandardMaterial({ color: 0xccaa88, transparent: true, opacity: S.opacity })
@@ -698,7 +724,7 @@ function rotateSelected(deg) {
   obj.group.rotation.y = obj.rotY;
 }
 
-// ✅ Scale corrigé : utilise baseScale
+// ✅ Scale uses baseScale so user multiplier stacks correctly
 function scaleObject(obj, val) {
   const c = Math.max(0.05, Math.min(8, val));
   obj.scaleVal = c;
@@ -867,7 +893,7 @@ window.loadProductCatalog = function (products) {
 };
 
 window.onerror = function (msg, url, line, col, error) {
-  console.error("💥 GLOBAL ERROR:", msg, url, line, col, error);
+  console.error('💥 GLOBAL ERROR:', msg, url, line, col, error);
 };
 
 function buildCategoryTabs(products) {
