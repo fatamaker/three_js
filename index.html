@@ -642,23 +642,11 @@ model.position.y += 0.01; // 🔥 AJOUTE ÇA
         );
 
         // ── STEP 4 : materials ──
-       model.traverse(c => {
+       // Fix matériaux
+model.traverse(c => {
   if (c.isMesh) {
-    const mats = Array.isArray(c.material) ? c.material : [c.material];
-
-    c.material = mats.map(m => {
-      const mc = m.clone();
-
-      mc.side = THREE.DoubleSide;      // 🔥 IMPORTANT
-      mc.transparent = false;          // 🔥 IMPORTANT
-      mc.depthWrite = true;
-
-      // BOOST visibilité
-      mc.metalness = 0;
-      mc.roughness = 1;
-
-      return mc;
-    });
+    c.material.side = THREE.DoubleSide;
+    c.material.needsUpdate = true;
   }
 });
         group.add(model);
@@ -836,7 +824,12 @@ function onSheetDragEnd() { if (shDragStartY === null) return; const h = sheet.g
 window.addEventListener('mouseup', onSheetDragEnd);
 window.addEventListener('touchend', onSheetDragEnd);
 handleEl.addEventListener('click', () => { const h = sheet.getBoundingClientRect().height; setSheetH(h <= PEEK + 10 ? MID : h >= FULL - 20 ? PEEK : FULL); });
+const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
+scene.add(light);
 
+const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+dirLight.position.set(0, 10, 0);
+scene.add(dirLight);
 /* ═══════════════════════════════════════════
    PLACE / RESET / CAPTURE
 ═══════════════════════════════════════════ */
