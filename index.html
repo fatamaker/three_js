@@ -336,10 +336,12 @@ function initThreeJS() {
   loader = new THREE.GLTFLoader();
 
   window.addEventListener('resize', () => {
-    camera3.aspect = window.innerWidth / window.innerHeight;
-    camera3.updateProjectionMatrix();
-    renderer3.setSize(window.innerWidth, window.innerHeight);
-  });
+  // Don't resize while WebXR is presenting — Three.js manages the canvas size itself
+  if (renderer3.xr && renderer3.xr.isPresenting) return;
+  camera3.aspect = window.innerWidth / window.innerHeight;
+  camera3.updateProjectionMatrix();
+  renderer3.setSize(window.innerWidth, window.innerHeight);
+});
 }
 
 /* ═══════════════════════════════════════════
