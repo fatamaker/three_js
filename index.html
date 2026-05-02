@@ -309,7 +309,7 @@ const S = {
   currentHitMatrix: null,
   meshIdCounter: 0,
 };
-
+const BACKEND_BASE = 'http://127.0.0.1:8000'; 
 /* ═══════════════════════════════════════════
    DOM REFS
 ═══════════════════════════════════════════ */
@@ -1044,13 +1044,13 @@ function loadFromUrlParams() {
     try {
       const products = JSON.parse(decodeURIComponent(productsParam));
       // Map Flutter product format → internal format
-      const mapped = products.map(p => ({
-        id: p.id || p._id,
-        name: p.name,
-        modelUrl: p.modelUrl || p.model3D || p.modelUrl || '',
-        imageUrl: p.imageUrl || p.image || p.thumbnail || '',
-        category: p.category || 'Furniture',
-      }));
+     const mapped = products.map(p => ({
+  id: p.id || p._id,
+  name: p.name,
+  modelUrl: p.modelUrl.startsWith('http') ? p.modelUrl : BACKEND_BASE + p.modelUrl,
+  imageUrl: p.imageUrl.startsWith('http') ? p.imageUrl : BACKEND_BASE + p.imageUrl,
+  category: p.category || 'Furniture',
+}));
       setTimeout(() => window.loadProductCatalog(mapped), 500);
     } catch (e) {
       console.error('Failed to parse products from URL', e);
