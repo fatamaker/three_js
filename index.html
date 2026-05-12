@@ -36,8 +36,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:var
 #glbLoader.visible{display:flex}
 .spin{width:34px;height:34px;border:3px solid rgba(245,144,100,.25);border-top-color:var(--primary);border-radius:50%;animation:spin .7s linear infinite}
 #glbLoader p{color:rgba(255,255,255,.8);font-size:12px;font-weight:500}
-#actionBar{position:fixed;bottom:0;left:0;right:0;z-index:25;transform:translateY(100%);transition:transform .3s cubic-bezier(.32,.72,0,1)}
-#actionBar.visible{transform:translateY(0)}
+#actionBar{position:fixed;bottom:0;left:0;right:0;z-index:25;transform:translateY(100%);transition:transform .3s cubic-bezier(.32,.72,0,1);display:none}
+#actionBar.visible{transform:translateY(0);display:flex}
 #actionBarInner{margin:0 12px 12px;background:var(--white);border-radius:var(--r-lg);padding:12px 14px;display:flex;align-items:center;gap:8px;box-shadow:var(--shadow);flex-wrap:wrap}
 .aBtn{flex:1;min-width:42px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 5px;border-radius:var(--r-md);border:none;cursor:pointer;font-family:var(--font);font-size:8px;font-weight:600;letter-spacing:.3px;color:var(--hint);background:var(--lg2);transition:all .2s;text-transform:uppercase}
 .aBtn:active{transform:scale(.93)}
@@ -92,10 +92,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;heigh
 #videoEl{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;display:none}
 #saveToast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:200;display:flex;flex-direction:column;align-items:center;gap:10px;padding:24px 32px;background:rgba(20,30,40,.92);backdrop-filter:blur(20px);border-radius:var(--r-lg);border:1px solid rgba(255,255,255,.15);color:#fff;font-size:13px;font-weight:600;pointer-events:none;opacity:0;transition:opacity .3s;text-align:center}
 #saveToast.show{opacity:1}
-/* Reticule dynamique selon surface */
 #xrReticle{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:5;pointer-events:none;opacity:0;transition:opacity .4s}
 #xrReticle.visible{opacity:1}
-/* Label surface sous le reticule */
 #surfaceLabel{position:fixed;top:calc(50% + 46px);left:50%;transform:translateX(-50%);z-index:6;padding:3px 10px;border-radius:12px;font-size:9px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;pointer-events:none;opacity:0;transition:all .3s;white-space:nowrap}
 #surfaceLabel.visible{opacity:1}
 #surfaceLabel.floor{background:rgba(82,180,107,.25);color:#52B46B;border:1px solid rgba(82,180,107,.4)}
@@ -103,6 +101,12 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;heigh
 #surfaceLabel.ceiling{background:rgba(245,144,100,.25);color:#F59064;border:1px solid rgba(245,144,100,.4)}
 #scaleHint{position:fixed;bottom:160px;left:50%;transform:translateX(-50%);z-index:19;padding:6px 14px;border-radius:20px;background:rgba(0,0,0,.6);color:rgba(255,255,255,.8);font-size:10px;font-weight:500;pointer-events:none;opacity:0;transition:opacity .3s}
 #scaleHint.visible{opacity:1}
+/* GESTURE INDICATORS */
+#gestureHint{position:fixed;bottom:120px;left:50%;transform:translateX(-50%);z-index:19;padding:8px 16px;border-radius:20px;background:rgba(0,0,0,.7);color:rgba(255,255,255,.85);font-size:11px;font-weight:600;pointer-events:none;opacity:0;transition:opacity .3s;text-align:center}
+#gestureHint.visible{opacity:1}
+#deleteHint{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:18;padding:12px 24px;border-radius:var(--r-lg);background:rgba(221,80,80,.85);color:#fff;font-size:14px;font-weight:700;pointer-events:none;opacity:0;transition:opacity .2s;text-align:center}
+#deleteHint.show{opacity:1;animation:pulse-delete .6s ease-out}
+@keyframes pulse-delete{0%{opacity:1;transform:translate(-50%,-50%) scale(1)}50%{opacity:0.5}100%{opacity:0;transform:translate(-50%,-50%) scale(0.8)}}
 </style>
 </head>
 <body>
@@ -112,14 +116,12 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;heigh
 
 <!-- Reticule SVG — 3 couches, une visible à la fois selon la surface -->
 <div id="xrReticle">
-  <!-- SOL : ellipse horizontale -->
   <svg id="reticleSvgFloor" width="70" height="70" viewBox="0 0 70 70" fill="none">
     <ellipse cx="35" cy="35" rx="30" ry="11" stroke="rgba(82,180,107,.9)" stroke-width="1.5" stroke-dasharray="6 4"/>
     <circle cx="35" cy="35" r="3" fill="#52B46B"/>
     <line x1="35" y1="20" x2="35" y2="28" stroke="rgba(82,180,107,.9)" stroke-width="2" stroke-linecap="round"/>
     <line x1="35" y1="42" x2="35" y2="50" stroke="rgba(82,180,107,.9)" stroke-width="2" stroke-linecap="round"/>
   </svg>
-  <!-- MUR : rectangle vertical -->
   <svg id="reticleSvgWall" width="70" height="70" viewBox="0 0 70 70" fill="none" style="display:none;position:absolute;top:0;left:0">
     <rect x="12" y="8" width="46" height="54" rx="3" stroke="rgba(111,163,216,.9)" stroke-width="1.5" stroke-dasharray="6 4"/>
     <circle cx="35" cy="35" r="3" fill="#6fa3d8"/>
@@ -128,7 +130,6 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;heigh
     <line x1="18" y1="35" x2="28" y2="35" stroke="rgba(111,163,216,.9)" stroke-width="2" stroke-linecap="round"/>
     <line x1="42" y1="35" x2="52" y2="35" stroke="rgba(111,163,216,.9)" stroke-width="2" stroke-linecap="round"/>
   </svg>
-  <!-- PLAFOND : ellipse inversée + flèche vers le haut -->
   <svg id="reticleSvgCeiling" width="70" height="70" viewBox="0 0 70 70" fill="none" style="display:none;position:absolute;top:0;left:0">
     <ellipse cx="35" cy="35" rx="30" ry="11" stroke="rgba(245,144,100,.9)" stroke-width="1.5" stroke-dasharray="6 4"/>
     <circle cx="35" cy="35" r="3" fill="#F59064"/>
@@ -140,6 +141,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;heigh
 <div id="surfaceLabel">Sol</div>
 
 <div id="scaleHint">Pincez pour redimensionner</div>
+<div id="gestureHint">Tournez deux doigts pour pivoter</div>
+<div id="deleteHint">🗑️ Supprimé</div>
 <div id="glbLoader"><div class="spin"></div><p id="glbLoaderText">Chargement…</p></div>
 <div id="saveToast"><span id="saveToastIcon">📸</span><span id="saveToastText">Capture !</span></div>
 
@@ -157,7 +160,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;heigh
   <div class="startFeatures">
     <div class="startFeature"><div class="startFeature-dot"></div>Détection sol, murs et plafond</div>
     <div class="startFeature"><div class="startFeature-dot"></div>Placement précis avec WebXR</div>
-    <div class="startFeature"><div class="startFeature-dot"></div>Rotation et redimensionnement</div>
+    <div class="startFeature"><div class="startFeature-dot"></div>Gestes: rotation, redimensionnement, suppression</div>
     <div class="startFeature"><div class="startFeature-dot"></div>Plusieurs produits simultanés</div>
   </div>
   <button id="startArBtn">🚀 Lancer la AR</button>
@@ -188,26 +191,6 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;heigh
   <div id="actionBarInner">
     <div id="selectedProductName">—</div>
     <div style="flex:1"></div>
-    <button class="aBtn" id="aBtnRotL">
-      <svg viewBox="0 0 18 18"><path d="M3 9a6 6 0 1 0 1.1-3.4"/><polyline points="1,3 3,6.5 6,4"/></svg>
-      <span>−Rot</span>
-    </button>
-    <button class="aBtn" id="aBtnRotR">
-      <svg viewBox="0 0 18 18"><path d="M15 9a6 6 0 1 1-1.1-3.4"/><polyline points="17,3 15,6.5 12,4"/></svg>
-      <span>+Rot</span>
-    </button>
-    <button class="aBtn" id="aBtnScaleUp">
-      <svg viewBox="0 0 18 18"><rect x="2" y="2" width="14" height="14" rx="2"/><line x1="9" y1="5" x2="9" y2="13"/><line x1="5" y1="9" x2="13" y2="9"/></svg>
-      <span>+</span>
-    </button>
-    <button class="aBtn" id="aBtnScaleDown">
-      <svg viewBox="0 0 18 18"><rect x="2" y="2" width="14" height="14" rx="2"/><line x1="5" y1="9" x2="13" y2="9"/></svg>
-      <span>−</span>
-    </button>
-    <button class="aBtn delete" id="aBtnDelete">
-      <svg viewBox="0 0 18 18"><polyline points="3,5 15,5"/><path d="M7 5V3h4v2"/><path d="M5 5l1 10h6l1-10"/></svg>
-      <span>Suppr.</span>
-    </button>
     <button class="aBtn confirm" id="aBtnConfirm">
       <svg viewBox="0 0 18 18"><polyline points="3,9 7,13 15,5"/></svg>
       <span>OK</span>
@@ -264,8 +247,13 @@ const S = {
   touchStartDist: null, touchStartScale: 1,
   hitTestSource: null, hitTestSourceInitialized: false,
   reticleVisible: false, currentHitMatrix: null, meshIdCounter: 0,
-  currentSurfaceType: 'floor',   // 'floor' | 'wall' | 'ceiling'
+  currentSurfaceType: 'floor',
   detectedPlanes: new Map(),
+  // GESTES
+  twoTouchStart: null,
+  rotationStart: 0,
+  doubleTapTimeout: null,
+  lastTapTime: 0,
 };
 
 /* ═══════════════════════════════════════
@@ -290,6 +278,8 @@ const glbLoaderText = document.getElementById('glbLoaderText');
 const productScroll = document.getElementById('productScroll');
 const catTabs       = document.getElementById('catTabs');
 const scaleHint     = document.getElementById('scaleHint');
+const gestureHint   = document.getElementById('gestureHint');
+const deleteHint    = document.getElementById('deleteHint');
 const videoEl       = document.getElementById('videoEl');
 
 function setStatus(msg, cls='') {
@@ -302,7 +292,6 @@ function setStatus(msg, cls='') {
    SURFACE UI
 ═══════════════════════════════════════ */
 function getSurfaceTypeFromPose(pose) {
-  // column-major matrix : index 5 = Y component of local Y axis (normal)
   const m = pose.transform.matrix;
   const normalY = m[5];
   if (Math.abs(normalY) > 0.7) return normalY > 0 ? 'floor' : 'ceiling';
@@ -310,17 +299,14 @@ function getSurfaceTypeFromPose(pose) {
 }
 
 function updateSurfaceUI(type) {
-  // Bascule les SVG reticules
   document.getElementById('reticleSvgFloor').style.display   = type === 'floor'   ? '' : 'none';
   document.getElementById('reticleSvgWall').style.display    = type === 'wall'    ? '' : 'none';
   document.getElementById('reticleSvgCeiling').style.display = type === 'ceiling' ? '' : 'none';
 
-  // Label surface
   const labels = { floor: 'Sol', wall: 'Mur', ceiling: 'Plafond' };
   surfaceLabel.textContent = labels[type] || 'Sol';
   surfaceLabel.className = 'visible ' + type;
 
-  // 3D reticule mesh couleur
   if (xrReticleMesh) {
     const colors = { floor: 0x52B46B, wall: 0x6fa3d8, ceiling: 0xF59064 };
     xrReticleMesh.material.color.set(colors[type] || 0x52B46B);
@@ -340,7 +326,6 @@ function visualizePlane(plane, pose) {
   let planeMesh = S.detectedPlanes.get(plane);
   if (!planeMesh) {
     const isWall = plane.orientation === 'vertical';
-    // Sol/plafond : vert/orange — Mur : bleu
     const color = isWall ? 0x6fa3d8 : (plane.orientation === 'horizontal' ? 0x52B46B : 0xF59064);
     const geo = new THREE.PlaneGeometry(1, 1);
     const mat = new THREE.MeshBasicMaterial({
@@ -381,20 +366,17 @@ function initThreeJS() {
   renderer3.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer3.xr.enabled = true;
 
-  // PMREMGenerator — requis pour MeshStandardMaterial (PBR)
   const pmrem = new THREE.PMREMGenerator(renderer3);
   pmrem.compileEquirectangularShader();
   scene.environment = pmrem.fromScene(new THREE.RoomEnvironment()).texture;
   pmrem.dispose();
 
-  // Lumières (une seule fois)
   scene.add(new THREE.AmbientLight(0xffffff, 1.2));
   const dir = new THREE.DirectionalLight(0xffffff, 1.4);
   dir.position.set(3, 8, 5); dir.castShadow = true; scene.add(dir);
   const fill = new THREE.DirectionalLight(0xffffff, 0.4);
   fill.position.set(-4, 2, -4); scene.add(fill);
 
-  // Reticule 3D (anneau au sol)
   const reticleGeo = new THREE.RingGeometry(0.12, 0.15, 32).rotateX(-Math.PI / 2);
   const reticleMat = new THREE.MeshBasicMaterial({ color: 0x52B46B, side: THREE.DoubleSide });
   xrReticleMesh = new THREE.Mesh(reticleGeo, reticleMat);
@@ -434,7 +416,6 @@ async function startXRSession() {
     xrReferenceSpace = await session.requestReferenceSpace('local');
 
     const viewerSpace = await session.requestReferenceSpace('viewer');
-    // entityTypes permet le hit-test sur murs et plafond en plus du sol
     S.hitTestSource = await session.requestHitTestSource({
       space: viewerSpace,
       entityTypes: ['plane', 'point', 'mesh'],
@@ -480,7 +461,6 @@ function onXRSessionEnd() {
 function xrRenderLoop(timestamp, frame) {
   if (!frame) return;
 
-  // ── Hit-test ──
   if (S.hitTestSourceInitialized && S.hitTestSource) {
     const results = frame.getHitTestResults(S.hitTestSource);
     if (results.length > 0) {
@@ -503,7 +483,6 @@ function xrRenderLoop(timestamp, frame) {
     }
   }
 
-  // ── Plane detection ──
   if (frame.detectedPlanes) {
     frame.detectedPlanes.forEach(plane => {
       const pose = frame.getPose(plane.planeSpace, xrReferenceSpace);
@@ -555,7 +534,7 @@ async function startFallbackMode() {
 }
 
 /* ═══════════════════════════════════════
-   TOUCH / TAP
+   TOUCH / GESTES AVANCÉS
 ═══════════════════════════════════════ */
 function setupXRSelect() {
   if (!S.xrSession) return;
@@ -596,6 +575,74 @@ function hitTestObjects() {
   return S.placedObjects.find(o => o.id === h.userData.placeId) || null;
 }
 
+/* TOUCH EVENTS - Gestes avancés */
+document.addEventListener('touchstart', e => {
+  if (e.touches.length === 1) {
+    // Double tap detect
+    const now = Date.now();
+    if (now - S.lastTapTime < 300) {
+      // DOUBLE TAP → suppression de l'objet sélectionné
+      clearTimeout(S.doubleTapTimeout);
+      if (S.selectedObjectId) {
+        deleteSelected();
+      }
+    } else {
+      S.lastTapTime = now;
+      S.doubleTapTimeout = setTimeout(() => { S.lastTapTime = 0; }, 300);
+    }
+  } else if (e.touches.length === 2) {
+    // Two fingers - rotation ou pinch
+    const t1 = e.touches[0];
+    const t2 = e.touches[1];
+    S.twoTouchStart = {
+      x1: t1.clientX, y1: t1.clientY,
+      x2: t2.clientX, y2: t2.clientY,
+      angle: Math.atan2(t2.clientY - t1.clientY, t2.clientX - t1.clientX),
+      dist: Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY),
+    };
+    S.rotationStart = 0;
+    const obj = S.placedObjects.find(o => o.id === S.selectedObjectId);
+    if (obj) S.touchStartScale = obj.scaleVal;
+    gestureHint.classList.add('visible');
+  }
+}, { passive: true });
+
+document.addEventListener('touchmove', e => {
+  if (e.touches.length === 2 && S.twoTouchStart && S.selectedObjectId) {
+    const t1 = e.touches[0];
+    const t2 = e.touches[1];
+    const newAngle = Math.atan2(t2.clientY - t1.clientY, t2.clientX - t1.clientX);
+    const newDist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+    
+    const obj = S.placedObjects.find(o => o.id === S.selectedObjectId);
+    if (!obj) return;
+
+    // ROTATION (angle delta)
+    const angleDelta = (newAngle - S.twoTouchStart.angle) * (180 / Math.PI);
+    if (Math.abs(angleDelta) > 1) {
+      obj.rotY += angleDelta * 0.02; // smooth
+      obj.group.rotation.y = obj.rotY;
+    }
+
+    // PINCH (scale)
+    const distRatio = newDist / S.twoTouchStart.dist;
+    scaleObject(obj, S.touchStartScale * distRatio);
+  }
+}, { passive: true });
+
+document.addEventListener('touchend', () => { 
+  S.twoTouchStart = null;
+  gestureHint.classList.remove('visible');
+}, { passive: true });
+
+/* Single tap on 3D (fallback) */
+threeCanvas.addEventListener('click', (e) => {
+  if (S.pendingPlace && !S.xrMode) return;
+  const objHit = hitTestObjects();
+  if (objHit) selectObject(objHit.id);
+  else deselectObject();
+});
+
 /* ═══════════════════════════════════════
    SMART SCALE
 ═══════════════════════════════════════ */
@@ -614,7 +661,7 @@ function computeModelScale(model, category) {
 }
 
 /* ═══════════════════════════════════════
-   PLACE PRODUCT  ← BUG CORRIGÉ ICI
+   PLACE PRODUCT
 ═══════════════════════════════════════ */
 function placeProductAtPosition(pos, quat) {
   const product = S.catalog.find(p => p.id === S.selectedProductId);
@@ -628,7 +675,6 @@ function placeProductAtPosition(pos, quat) {
   const id = ++S.meshIdCounter;
   group.userData.placeId = id;
 
-  // Snapshot de la surface au moment du placement
   const surfaceAtPlacement = S.currentSurfaceType;
 
   const entry = {
@@ -653,47 +699,37 @@ function placeProductAtPosition(pos, quat) {
         const model = gltf.scene;
         if (!model) return;
 
-        // Reset transforms
         model.position.set(0, 0, 0);
         model.rotation.set(0, 0, 0);
         model.scale.set(1, 1, 1);
         model.updateMatrixWorld(true);
 
-        // STEP 1 : scale intelligente
         const modelScale = computeModelScale(model, entry.category);
         entry.baseScale = modelScale;
 
-        // STEP 2 : scale finale
         const finalScale = modelScale * S.scaleMultiplier;
         model.scale.setScalar(finalScale);
         model.updateMatrixWorld(true);
 
-        // STEP 3 : bounding box APRÈS scale  ← DOIT ÊTRE AVANT l'ajustement surface
         const bb = new THREE.Box3().setFromObject(model);
         const center = bb.getCenter(new THREE.Vector3());
 
-        // Centre X/Z
         model.position.x -= center.x;
         model.position.z -= center.z;
 
-        // STEP 4 : ajustement selon la surface (utilise bb calculé juste au-dessus)
         if (surfaceAtPlacement === 'wall') {
-          // Mur : centre verticalement, sort légèrement du mur
           model.position.y -= center.y;
           model.position.z += 0.02;
         } else if (surfaceAtPlacement === 'ceiling') {
-          // Plafond : retourne le modèle, accroche par le haut
           model.rotation.x = Math.PI;
           model.updateMatrixWorld(true);
           const bbFlipped = new THREE.Box3().setFromObject(model);
           model.position.y -= bbFlipped.min.y;
         } else {
-          // Sol : pose le bas du modèle exactement sur le sol
           model.position.y -= bb.min.y;
-          model.position.y += 0.002; // micro-offset anti z-fighting
+          model.position.y += 0.002;
         }
 
-        // STEP 5 : matériaux PBR + textures
         model.traverse(c => {
           if (!c.isMesh) return;
           const mats = Array.isArray(c.material) ? c.material : [c.material];
@@ -733,7 +769,6 @@ function placeProductAtPosition(pos, quat) {
     );
 
   } else {
-    // Placeholder cube
     const placeholder = new THREE.Mesh(
       new THREE.BoxGeometry(0.5, 0.5, 0.5),
       new THREE.MeshStandardMaterial({ color: 0xccaa88, transparent: true, opacity: S.opacity })
@@ -757,31 +792,46 @@ function selectObject(id) {
   selProdName.textContent = obj.name || 'Objet';
   actionBar.classList.add('visible');
 }
-function deselectObject() { S.selectedObjectId = null; actionBar.classList.remove('visible'); }
+
+function deselectObject() { 
+  S.selectedObjectId = null; 
+  actionBar.classList.remove('visible'); 
+}
+
 function rotateSelected(deg) {
   const obj = S.placedObjects.find(o => o.id === S.selectedObjectId);
   if (!obj) return;
   obj.rotY += deg * Math.PI / 180;
   obj.group.rotation.y = obj.rotY;
 }
+
 function scaleObject(obj, val) {
   const c = Math.max(0.05, Math.min(8, val));
   obj.scaleVal = c;
   if (obj.model) obj.model.scale.setScalar((obj.baseScale || 1) * c);
 }
+
 function deleteSelected() {
   const obj = S.placedObjects.find(o => o.id === S.selectedObjectId);
   if (!obj) return;
   scene.remove(obj.group);
   S.placedObjects = S.placedObjects.filter(o => o.id !== S.selectedObjectId);
-  deselectObject(); updatePlacedBadge();
+  deselectObject(); 
+  updatePlacedBadge();
+  
+  // Affiche animation de suppression
+  deleteHint.classList.add('show');
+  setTimeout(() => deleteHint.classList.remove('show'), 600);
+  
   postToFlutter({ type: 'removed', count: S.placedObjects.length });
 }
+
 function updatePlacedBadge() {
   const n = S.placedObjects.length;
   placedCountEl.textContent = n;
   placedBadge.classList.toggle('visible', n > 0);
 }
+
 function updateAllOpacity() {
   S.placedObjects.forEach(obj => {
     obj.group.traverse(c => {
@@ -793,38 +843,8 @@ function updateAllOpacity() {
 }
 
 /* ═══════════════════════════════════════
-   TOUCH PINCH
-═══════════════════════════════════════ */
-document.addEventListener('touchstart', e => {
-  if (e.touches.length === 2) {
-    S.touchStartDist = Math.hypot(e.touches[0].clientX-e.touches[1].clientX, e.touches[0].clientY-e.touches[1].clientY);
-    const obj = S.placedObjects.find(o => o.id === S.selectedObjectId);
-    S.touchStartScale = obj ? obj.scaleVal : 1;
-  }
-}, { passive: true });
-document.addEventListener('touchmove', e => {
-  if (e.touches.length === 2 && S.touchStartDist) {
-    const d = Math.hypot(e.touches[0].clientX-e.touches[1].clientX, e.touches[0].clientY-e.touches[1].clientY);
-    const obj = S.placedObjects.find(o => o.id === S.selectedObjectId);
-    if (obj) scaleObject(obj, S.touchStartScale * (d / S.touchStartDist));
-  }
-}, { passive: true });
-document.addEventListener('touchend', () => { S.touchStartDist = null; });
-
-/* ═══════════════════════════════════════
    ACTION BAR
 ═══════════════════════════════════════ */
-document.getElementById('aBtnRotL').addEventListener('click', () => rotateSelected(-20));
-document.getElementById('aBtnRotR').addEventListener('click', () => rotateSelected(20));
-document.getElementById('aBtnScaleUp').addEventListener('click', () => {
-  const o = S.placedObjects.find(o => o.id === S.selectedObjectId);
-  if (o) scaleObject(o, o.scaleVal * 1.2);
-});
-document.getElementById('aBtnScaleDown').addEventListener('click', () => {
-  const o = S.placedObjects.find(o => o.id === S.selectedObjectId);
-  if (o) scaleObject(o, o.scaleVal / 1.2);
-});
-document.getElementById('aBtnDelete').addEventListener('click', deleteSelected);
 document.getElementById('aBtnConfirm').addEventListener('click', deselectObject);
 
 /* ═══════════════════════════════════════
@@ -954,7 +974,6 @@ function selectProductById(id) {
   if (p) {
     const isWall    = /tableau|cadre|miroir|applique|papier.peint|wallpaper/i.test(p.name+' '+p.category);
     const isCeiling = /plafond|ceiling|lustre|suspension|lampe.plafond/i.test(p.name+' '+p.category);
-    // Pré-sélectionne la surface suggérée
     if (isWall)    S.currentSurfaceType = 'wall';
     if (isCeiling) S.currentSurfaceType = 'ceiling';
     updateSurfaceUI(S.currentSurfaceType);
