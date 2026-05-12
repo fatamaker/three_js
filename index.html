@@ -107,6 +107,32 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;heigh
 #deleteHint{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:18;padding:12px 24px;border-radius:var(--r-lg);background:rgba(221,80,80,.85);color:#fff;font-size:14px;font-weight:700;pointer-events:none;opacity:0;transition:opacity .2s;text-align:center}
 #deleteHint.show{opacity:1;animation:pulse-delete .6s ease-out}
 @keyframes pulse-delete{0%{opacity:1;transform:translate(-50%,-50%) scale(1)}50%{opacity:0.5}100%{opacity:0;transform:translate(-50%,-50%) scale(0.8)}}
+/* GUIDE MODAL */
+#guideModal{position:fixed;inset:0;z-index:101;background:rgba(0,0,0,.95);display:none;align-items:center;justify-content:center;padding:20px;animation:fadeIn .3s ease}
+#guideModal.visible{display:flex}
+#guideContent{background:rgba(40,79,117,.2);border:1px solid rgba(255,255,255,.2);border-radius:var(--r-lg);max-width:600px;max-height:85vh;overflow-y:auto;padding:24px;color:#fff}
+#guideContent::-webkit-scrollbar{width:6px}
+#guideContent::-webkit-scrollbar-track{background:transparent}
+#guideContent::-webkit-scrollbar-thumb{background:rgba(255,255,255,.3);border-radius:3px}
+#guideContent::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.5)}
+.guide-close{position:absolute;top:16px;right:16px;background:none;border:none;font-size:24px;color:#fff;cursor:pointer;opacity:.6;transition:opacity .2s}
+.guide-close:hover{opacity:1}
+.guide-title{font-size:20px;font-weight:700;margin-bottom:20px;text-align:center;color:#fff;border-bottom:1px solid rgba(255,255,255,.1);padding-bottom:16px}
+.guide-section{margin-bottom:20px}
+.guide-section-title{font-size:12px;font-weight:700;text-transform:uppercase;color:rgba(255,255,255,.7);letter-spacing:.5px;margin-bottom:12px}
+.guide-gesture{background:rgba(255,255,255,.05);border-left:2px solid rgba(255,255,255,.3);padding:12px;border-radius:4px;margin-bottom:10px}
+.guide-gesture-name{font-weight:600;color:#fff;margin-bottom:6px;font-size:13px}
+.guide-gesture-desc{font-size:12px;color:rgba(255,255,255,.8);line-height:1.6}
+.guide-gesture-detail{font-size:11px;color:rgba(255,255,255,.6);margin-top:8px;padding-left:8px;border-left:1px solid rgba(255,255,255,.2);line-height:1.5}
+.guide-shortcut{display:inline-block;background:rgba(255,255,255,.1);padding:3px 8px;border-radius:3px;font-size:11px;color:rgba(255,255,255,.7);font-weight:600;margin-top:6px}
+.guide-tips{background:rgba(255,255,255,.05);border-left:2px solid rgba(255,255,255,.3);padding:10px;border-radius:4px;margin-bottom:10px;font-size:12px}
+.guide-tips strong{color:#fff}
+.guide-tips.good{border-left-color:rgba(82,180,107,.5);color:rgba(255,255,255,.8)}
+.guide-tips.warning{border-left-color:rgba(221,80,80,.5);color:rgba(255,255,255,.8)}
+#infoBtn{position:fixed;bottom:calc(var(--safe-area-inset-bottom,20px) + 100px);right:20px;z-index:22;width:48px;height:48px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:50%;color:#fff;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.3);transition:all .3s;display:flex;align-items:center;justify-content:center;font-weight:600}
+#infoBtn:hover{background:rgba(255,255,255,.25);border-color:rgba(255,255,255,.5);transform:scale(1.08)}
+#infoBtn:active{transform:scale(0.96)}
+@keyframes fadeIn{from{opacity:0;transform:scale(0.95)}to{opacity:1;transform:scale(1)}}
 </style>
 </head>
 <body>
@@ -142,9 +168,100 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;heigh
 
 <div id="scaleHint">Pincez pour redimensionner</div>
 <div id="gestureHint">Tournez deux doigts pour pivoter</div>
-<div id="deleteHint">🗑️ Supprimé</div>
+<div id="deleteHint">Supprimé</div>
 <div id="glbLoader"><div class="spin"></div><p id="glbLoaderText">Chargement…</p></div>
 <div id="saveToast"><span id="saveToastIcon">📸</span><span id="saveToastText">Capture !</span></div>
+
+<!-- GUIDE MODAL -->
+<div id="guideModal">
+  <button class="guide-close" id="guideCloseBtn">×</button>
+  <div id="guideContent">
+    <div class="guide-title">Guide des Gestes</div>
+    
+    <div class="guide-section">
+      <div class="guide-section-title">Gestes Disponibles</div>
+      
+      <div class="guide-gesture">
+        <div class="guide-gesture-name">1. Tap Simple</div>
+        <div class="guide-gesture-desc">Un doigt - Appuyez une fois pour sélectionner l'objet</div>
+        <span class="guide-shortcut">Feedback: Barre OK s'affiche</span>
+      </div>
+
+      <div class="guide-gesture">
+        <div class="guide-gesture-name">2. Rotation 360°</div>
+        <div class="guide-gesture-desc">Un doigt - Glissez pour tourner l'objet sur tous les axes</div>
+        <div class="guide-gesture-detail">
+          Haut/Bas = Rotation avant/arrière
+          Gauche/Droite = Rotation gauche/droite
+          Diagonal = Contrôle complet 360°
+        </div>
+        <span class="guide-shortcut">Glissez pour tourner</span>
+      </div>
+
+      <div class="guide-gesture">
+        <div class="guide-gesture-name">3. Pinch Zoom</div>
+        <div class="guide-gesture-desc">Deux doigts - Écartez pour agrandir, rapprochez pour réduire</div>
+        <div class="guide-gesture-detail">Plage: 5% à 800% de la taille d'origine</div>
+        <span class="guide-shortcut">Pincez pour redimensionner</span>
+      </div>
+
+      <div class="guide-gesture">
+        <div class="guide-gesture-name">4. Double-Tap</div>
+        <div class="guide-gesture-desc">Deux taps rapides (moins de 300ms) pour supprimer l'objet</div>
+        <div class="guide-gesture-detail">Seul l'objet sélectionné est supprimé</div>
+        <span class="guide-shortcut">Double-tap = Suppression</span>
+      </div>
+
+      <div class="guide-gesture">
+        <div class="guide-gesture-name">5. Bouton OK</div>
+        <div class="guide-gesture-desc">Appuyez sur OK pour désélectionner l'objet</div>
+        <span class="guide-shortcut">Barre d'action disparaît</span>
+      </div>
+    </div>
+
+    <div class="guide-section">
+      <div class="guide-section-title">Conseils</div>
+      
+      <div class="guide-tips good">
+        <strong>À faire:</strong> Glissez lentement pour un meilleur contrôle de la rotation
+      </div>
+
+      <div class="guide-tips good">
+        <strong>À faire:</strong> Combinez rotation et pinch pour ajuster en 3D
+      </div>
+
+      <div class="guide-tips good">
+        <strong>À faire:</strong> Utilisez des mouvements diagonaux pour rotation 3D complète
+      </div>
+
+      <div class="guide-tips warning">
+        <strong>À éviter:</strong> Gestes trop rapides sur appareils lents
+      </div>
+
+      <div class="guide-tips warning">
+        <strong>À éviter:</strong> Oublier de confirmer avant de placer un autre objet
+      </div>
+    </div>
+
+    <div class="guide-section">
+      <div class="guide-section-title">Flux Typique</div>
+      <div class="guide-gesture">
+        <div style="font-size:12px;line-height:1.8;color:rgba(255,255,255,.8)">
+          1. Sélectionnez un produit dans la liste
+          2. Appuyez sur "Placer ici"
+          3. Pointez la surface souhaitée
+          4. Appuyez pour placer
+          5. Faites glisser pour tourner
+          6. Pincez pour redimensionner
+          7. Appuyez OK quand c'est bon
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Bouton Info -->
+<button id="infoBtn" title="Afficher le guide">?</button>
 
 <div id="startScreen">
   <div class="startIcon">
@@ -576,9 +693,15 @@ function hitTestObjects() {
 }
 
 /* TOUCH EVENTS - Gestes avancés */
+const TOUCH_STATE = {
+  touchStart: null,
+  rotX: 0,  // rotation sur X (haut-bas)
+  rotY: 0,  // rotation sur Y (gauche-droite)
+};
+
 document.addEventListener('touchstart', e => {
   if (e.touches.length === 1) {
-    // Double tap detect
+    // Single finger - peut être double-tap ou drag pour rotation 360°
     const now = Date.now();
     if (now - S.lastTapTime < 300) {
       // DOUBLE TAP → suppression de l'objet sélectionné
@@ -586,43 +709,72 @@ document.addEventListener('touchstart', e => {
       if (S.selectedObjectId) {
         deleteSelected();
       }
+      TOUCH_STATE.touchStart = null;
     } else {
       S.lastTapTime = now;
       S.doubleTapTimeout = setTimeout(() => { S.lastTapTime = 0; }, 300);
+      
+      // Commencer le drag pour rotation (si objet sélectionné)
+      if (S.selectedObjectId) {
+        const t = e.touches[0];
+        TOUCH_STATE.touchStart = {
+          x: t.clientX,
+          y: t.clientY,
+          time: Date.now(),
+        };
+        const obj = S.placedObjects.find(o => o.id === S.selectedObjectId);
+        if (obj) {
+          TOUCH_STATE.rotX = obj.group.rotation.x;
+          TOUCH_STATE.rotY = obj.group.rotation.y;
+        }
+        gestureHint.textContent = '↕️ ↔️ Faites glisser pour tourner 360°';
+        gestureHint.classList.add('visible');
+      }
     }
   } else if (e.touches.length === 2) {
-    // Two fingers - rotation ou pinch
+    // Two fingers - pinch pour zoom
+    TOUCH_STATE.touchStart = null; // annuler drag single
     const t1 = e.touches[0];
     const t2 = e.touches[1];
     S.twoTouchStart = {
       x1: t1.clientX, y1: t1.clientY,
       x2: t2.clientX, y2: t2.clientY,
-      angle: Math.atan2(t2.clientY - t1.clientY, t2.clientX - t1.clientX),
       dist: Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY),
     };
-    S.rotationStart = 0;
     const obj = S.placedObjects.find(o => o.id === S.selectedObjectId);
     if (obj) S.touchStartScale = obj.scaleVal;
+    gestureHint.textContent = '✌️ Pincez pour redimensionner';
     gestureHint.classList.add('visible');
   }
 }, { passive: true });
 
 document.addEventListener('touchmove', e => {
-  if (e.touches.length === 2 && S.twoTouchStart && S.selectedObjectId) {
-    const t1 = e.touches[0];
-    const t2 = e.touches[1];
-    const newAngle = Math.atan2(t2.clientY - t1.clientY, t2.clientX - t1.clientX);
-    const newDist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+  // Single finger drag → rotation 360° (gauche-droite et haut-bas)
+  if (e.touches.length === 1 && TOUCH_STATE.touchStart && S.selectedObjectId) {
+    const t = e.touches[0];
+    const deltaX = t.clientX - TOUCH_STATE.touchStart.x;
+    const deltaY = t.clientY - TOUCH_STATE.touchStart.y;
     
     const obj = S.placedObjects.find(o => o.id === S.selectedObjectId);
     if (!obj) return;
 
-    // ROTATION (angle delta)
-    const angleDelta = (newAngle - S.twoTouchStart.angle) * (180 / Math.PI);
-    if (Math.abs(angleDelta) > 1) {
-      obj.rotY += angleDelta * 0.02; // smooth
-      obj.group.rotation.y = obj.rotY;
-    }
+    // Rotation sur Y (gauche-droite) : 0.01 rad par pixel
+    const rotYDelta = deltaX * 0.01;
+    // Rotation sur X (haut-bas) : 0.01 rad par pixel  
+    const rotXDelta = deltaY * 0.01;
+
+    obj.group.rotation.y = TOUCH_STATE.rotY + rotYDelta;
+    obj.group.rotation.x = TOUCH_STATE.rotX + rotXDelta;
+
+  } 
+  // Two finger pinch → scale
+  else if (e.touches.length === 2 && S.twoTouchStart && S.selectedObjectId) {
+    const t1 = e.touches[0];
+    const t2 = e.touches[1];
+    const newDist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+    
+    const obj = S.placedObjects.find(o => o.id === S.selectedObjectId);
+    if (!obj) return;
 
     // PINCH (scale)
     const distRatio = newDist / S.twoTouchStart.dist;
@@ -631,6 +783,7 @@ document.addEventListener('touchmove', e => {
 }, { passive: true });
 
 document.addEventListener('touchend', () => { 
+  TOUCH_STATE.touchStart = null;
   S.twoTouchStart = null;
   gestureHint.classList.remove('visible');
 }, { passive: true });
@@ -1024,6 +1177,34 @@ function postToFlutter(obj) {
     if (window.webkit?.messageHandlers?.FlutterBridge) { window.webkit.messageHandlers.FlutterBridge.postMessage(JSON.stringify(obj)); }
   } catch (e) { console.log('[Bridge]', obj); }
 }
+
+/* ═══════════════════════════════════════
+   GUIDE MODAL
+═══════════════════════════════════════ */
+const guideModal = document.getElementById('guideModal');
+const guideCloseBtn = document.getElementById('guideCloseBtn');
+const infoBtn = document.getElementById('infoBtn');
+
+infoBtn.addEventListener('click', () => {
+  guideModal.classList.add('visible');
+});
+
+guideCloseBtn.addEventListener('click', () => {
+  guideModal.classList.remove('visible');
+});
+
+guideModal.addEventListener('click', (e) => {
+  if (e.target === guideModal) {
+    guideModal.classList.remove('visible');
+  }
+});
+
+// Fermer avec Escape
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && guideModal.classList.contains('visible')) {
+    guideModal.classList.remove('visible');
+  }
+});
 
 window.receiveFromFlutter = function(jsonStr) {
   try {
